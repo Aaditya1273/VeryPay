@@ -48,17 +48,7 @@ function App() {
           <Route path="wallet/send" element={<SendPaymentPage />} />
           <Route path="wallet/receive" element={<ReceivePaymentPage />} />
           <Route path="tasks" element={<TasksPage />} />
-          <Route
-            path="tasks/create"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <CreateTaskPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route path="tasks/:id" element={<TaskDetailPage />} />
+          <Route path="tasks/create" element={<CreateTaskPage />} />
           <Route path="rewards" element={<RewardsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>

@@ -1,16 +1,25 @@
 # VPay - Web3 Micro-Economy Platform
 
-A comprehensive Web3 micro-economy layer for Verychat, enabling instant payments, micro-jobs marketplace, and loyalty rewards.
+VPay is a comprehensive Web3 micro-economy platform that enables instant payments, task completion rewards, and loyalty programs within the Very Network ecosystem. Built with React, Node.js, and Solidity smart contracts.
 
-## Tech Stack
+## 🚀 Features
 
-### Frontend
-- **React 18** with **Vite** for fast development
+- **💰 Instant Payments**: Send and receive VRC tokens with minimal fees
+- **💼 Task Marketplace**: Find and post micro-tasks for quick earnings
+- **🎁 Rewards System**: Earn points and unlock exclusive rewards
+- **🔐 Web3 Integration**: Connect your wallet for secure transactions
+- **📱 Modern UI**: Beautiful, responsive interface with dark/light themes
+- **⚡ Real-time Updates**: Live notifications and transaction updates
+
+## 🏗️ Architecture
+
+### Frontend (`/frontend`)
+- **React 18** with TypeScript
+- **Vite** for fast development and building
 - **TailwindCSS** for styling
-- **shadcn/ui** for component library
+- **shadcn/ui** for components
 - **React Router** for navigation
-- **React Context** for state management
-- **ethers.js** for Web3 wallet integration
+- **Ethers.js** for Web3 integration
 
 ### Backend
 - **Node.js** with **Express.js**

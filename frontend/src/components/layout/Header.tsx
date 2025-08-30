@@ -1,9 +1,10 @@
-import { Bell, Menu, Search, User } from 'lucide-react'
+import { Bell, Menu, Search, User, LogOut, Settings, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useWallet } from '@/contexts/WalletContext'
 import { formatAddress } from '@/lib/utils'
+import { useState } from 'react'
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -13,6 +14,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { account, isConnected } = useWallet()
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
   return (
     <header className="bg-background border-b border-border px-4 py-3 flex items-center justify-between">
@@ -78,17 +80,53 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
         {/* User Menu */}
         <div className="relative">
-          <Button variant="ghost" size="icon">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center space-x-2"
+          >
             {user?.avatar ? (
               <img
                 src={user.avatar}
                 alt={user.username}
-                className="h-8 w-8 rounded-full object-cover"
+                className="h-6 w-6 rounded-full object-cover"
               />
             ) : (
-              <User className="h-5 w-5" />
+              <User className="h-4 w-4" />
             )}
+            <span className="hidden sm:block text-sm">{user?.username || 'User'}</span>
+            <ChevronDown className="h-3 w-3" />
           </Button>
+
+          {/* Dropdown Menu */}
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-background border border-border rounded-lg shadow-lg z-50">
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false)
+                    // Navigate to profile/settings
+                  }}
+                  className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                >
+                  <Settings className="h-4 w-4 mr-3" />
+                  Settings
+                </button>
+                <hr className="my-1 border-border" />
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false)
+                    logout()
+                  }}
+                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <LogOut className="h-4 w-4 mr-3" />
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

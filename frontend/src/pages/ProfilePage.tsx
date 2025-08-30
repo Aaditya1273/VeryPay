@@ -33,7 +33,7 @@ export default function ProfilePage() {
   })
 
   const { user, logout } = useAuth()
-  const { account, balance, disconnect } = useWallet()
+  const { account, balance, disconnectWallet } = useWallet()
 
   const handleSave = () => {
     // Simulate API call
@@ -43,7 +43,7 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     await logout()
-    await disconnect()
+    await disconnectWallet()
   }
 
   return (
@@ -268,7 +268,7 @@ export default function ProfilePage() {
                     <p className="text-sm text-muted-foreground font-mono">{formatAddress(account)}</p>
                     <p className="text-sm text-muted-foreground">Balance: {formatCurrency(parseFloat(balance))}</p>
                   </div>
-                  <Button variant="outline" onClick={disconnect}>
+                  <Button variant="outline" onClick={disconnectWallet}>
                     Disconnect
                   </Button>
                 </div>

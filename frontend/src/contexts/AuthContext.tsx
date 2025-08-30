@@ -7,6 +7,7 @@ interface User {
   id: string
   email: string
   username: string
+  avatar?: string
   walletAddress?: string
   isVerified: boolean
   kycStatus: 'pending' | 'approved' | 'rejected'

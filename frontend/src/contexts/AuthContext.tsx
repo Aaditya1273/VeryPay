@@ -10,6 +10,9 @@ interface User {
   walletAddress?: string
   isVerified: boolean
   kycStatus: 'pending' | 'approved' | 'rejected'
+  rewardPoints?: number
+  tier?: string
+  totalEarnings?: number
   createdAt: string
 }
 

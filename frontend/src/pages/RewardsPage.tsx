@@ -1,19 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { formatCurrency } from '@/lib/utils'
 import { Gift, Trophy, Star, Crown, Zap, Target, Calendar, Clock } from 'lucide-react'
+import { rewardsAPI } from '@/services/api'
+import { useWallet } from '@/contexts/WalletContext'
+import toast from 'react-hot-toast'
 
-// Mock user data
-const mockUserData = {
-  totalPoints: 2450,
-  currentTier: 'Silver',
-  nextTier: 'Gold',
-  pointsToNextTier: 550,
-  lifetimeEarned: 5200,
-  tasksCompleted: 23,
-  streak: 7
+// Fallback defaults used before API loads
+const defaultUserData = {
+  totalPoints: 0,
+  currentTier: 'Bronze',
+  nextTier: 'Silver',
+  pointsToNextTier: 1000,
+  lifetimeEarned: 0,
+  tasksCompleted: 0,
+  streak: 0,
 }
 
 // Mock achievements
@@ -143,12 +146,92 @@ const tiers = [
 
 export default function RewardsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'achievements' | 'store'>('overview')
+  const { account } = useWallet()
+  const [loading, setLoading] = useState(false)
+  const [userData, setUserData] = useState(defaultUserData)
+  const [availableRewards, setAvailableRewards] = useState<any[]>([])
+  const [leaderboard, setLeaderboard] = useState<any[]>([])
 
-  const currentTierData = tiers.find(tier => tier.name === mockUserData.currentTier)
-  const nextTierData = tiers.find(tier => tier.name === mockUserData.nextTier)
-  const progressToNext = nextTierData ? 
-    ((mockUserData.totalPoints - (currentTierData?.min || 0)) / (nextTierData.min - (currentTierData?.min || 0))) * 100 
-    : 100
+  const currentTierData = tiers.find(tier => tier.name === userData.currentTier)
+  const nextTierData = tiers.find(tier => tier.name === userData.nextTier)
+  const progressToNext = nextTierData && currentTierData
+    ? Math.min(100, Math.max(0, ((userData.totalPoints - currentTierData.min) / (nextTierData.min - currentTierData.min)) * 100))
+    : 0
+
+  useEffect(() => {
+    if (!account) return
+    const load = async () => {
+      setLoading(true)
+      try {
+        // User points and eligible rewards
+        const userRes = await rewardsAPI.getUser(account)
+        const { points, availableRewards } = userRes.data
+        setUserData((prev) => ({
+          ...prev,
+          totalPoints: points || 0,
+        }))
+        setAvailableRewards(availableRewards || [])
+
+        // Global rewards list (for store)
+        const rewardsRes = await rewardsAPI.getRewards()
+        const storeRewards = rewardsRes.data?.rewards || []
+        // Merge availability based on points and stock
+        const enriched = storeRewards.map((r: any) => ({
+          ...r,
+          available: (r.stock ?? 0) > 0,
+          cost: r.pointsCost,
+          title: r.name,
+          description: r.description,
+          icon: '⭐',
+        }))
+        setAvailableRewards((prev) => {
+          // prefer store list as canonical
+          return enriched
+        })
+
+        // Leaderboard
+        const lbRes = await rewardsAPI.getLeaderboard()
+        setLeaderboard(lbRes.data?.leaderboard || [])
+      } catch (e: any) {
+        console.error(e)
+        toast.error('Failed to load rewards data')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [account])
+
+  const handleRedeem = async (rewardId: number) => {
+    if (!account) {
+      toast.error('Connect your wallet first')
+      return
+    }
+    try {
+      setLoading(true)
+      await rewardsAPI.redeem(rewardId, account)
+      toast.success('Reward redeemed')
+      // Refresh user points and rewards
+      const userRes = await rewardsAPI.getUser(account)
+      const { points } = userRes.data
+      setUserData((prev) => ({ ...prev, totalPoints: points || 0 }))
+      const rewardsRes = await rewardsAPI.getRewards()
+      const storeRewards = rewardsRes.data?.rewards || []
+      const enriched = storeRewards.map((r: any) => ({
+        ...r,
+        available: (r.stock ?? 0) > 0,
+        cost: r.pointsCost,
+        title: r.name,
+        description: r.description,
+        icon: '⭐',
+      }))
+      setAvailableRewards(enriched)
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error || 'Failed to redeem reward')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -190,7 +273,7 @@ export default function RewardsPage() {
                 <div className="w-16 h-16 bg-vpay-purple-100 dark:bg-vpay-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Star className="h-8 w-8 text-vpay-purple-600" />
                 </div>
-                <div className="text-2xl font-bold">{mockUserData.totalPoints.toLocaleString()}</div>
+                <div className="text-2xl font-bold">{userData.totalPoints.toLocaleString()}</div>
                 <div className="text-sm text-muted-foreground">Total Points</div>
               </CardContent>
             </Card>
@@ -200,7 +283,7 @@ export default function RewardsPage() {
                 <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Target className="h-8 w-8 text-green-600" />
                 </div>
-                <div className="text-2xl font-bold">{mockUserData.tasksCompleted}</div>
+                <div className="text-2xl font-bold">{userData.tasksCompleted}</div>
                 <div className="text-sm text-muted-foreground">Tasks Completed</div>
               </CardContent>
             </Card>
@@ -210,7 +293,7 @@ export default function RewardsPage() {
                 <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Zap className="h-8 w-8 text-orange-600" />
                 </div>
-                <div className="text-2xl font-bold">{mockUserData.streak}</div>
+                <div className="text-2xl font-bold">{userData.streak}</div>
                 <div className="text-sm text-muted-foreground">Day Streak</div>
               </CardContent>
             </Card>
@@ -221,16 +304,16 @@ export default function RewardsPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Crown className="h-5 w-5" />
-                <span>Current Tier: {mockUserData.currentTier}</span>
+                <span>Current Tier: {userData.currentTier}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className={`px-3 py-1 rounded-full text-sm font-medium ${currentTierData?.bg} ${currentTierData?.color}`}>
-                  {mockUserData.currentTier}
+                  {userData.currentTier}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {mockUserData.pointsToNextTier} points to {mockUserData.nextTier}
+                  {userData.pointsToNextTier} points to {userData.nextTier}
                 </div>
               </div>
               
@@ -247,7 +330,7 @@ export default function RewardsPage() {
                   <div
                     key={tier.name}
                     className={`text-center p-3 rounded-lg border ${
-                      tier.name === mockUserData.currentTier
+                      tier.name === userData.currentTier
                         ? 'border-vpay-purple-500 bg-vpay-purple-50 dark:bg-vpay-purple-900/20'
                         : 'border-gray-200 dark:border-gray-700'
                     }`}
@@ -345,35 +428,36 @@ export default function RewardsPage() {
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-vpay-purple-600">
-                {mockUserData.totalPoints.toLocaleString()}
+                {userData.totalPoints.toLocaleString()}
               </div>
               <div className="text-sm text-muted-foreground">Available Points</div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockRewards.map(reward => (
+            {availableRewards.map((reward: any) => (
               <Card key={reward.id} className={!reward.available ? 'opacity-60' : ''}>
                 <CardContent className="p-6">
                   <div className="text-center space-y-4">
                     <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto text-2xl">
-                      {reward.icon}
+                      {reward.icon || '⭐'}
                     </div>
                     <div>
-                      <h3 className="font-semibold">{reward.title}</h3>
+                      <h3 className="font-semibold">{reward.title || reward.name}</h3>
                       <p className="text-sm text-muted-foreground">{reward.description}</p>
                     </div>
                     <div className="space-y-3">
                       <div className="text-xl font-bold text-vpay-purple-600">
-                        {reward.cost.toLocaleString()} points
+                        {(reward.cost ?? reward.pointsCost)?.toLocaleString()} points
                       </div>
                       <Button
-                        variant={reward.available && mockUserData.totalPoints >= reward.cost ? "vpay" : "outline"}
-                        disabled={!reward.available || mockUserData.totalPoints < reward.cost}
+                        variant={reward.available && userData.totalPoints >= (reward.cost ?? reward.pointsCost) ? "vpay" : "outline"}
+                        disabled={loading || !reward.available || userData.totalPoints < (reward.cost ?? reward.pointsCost)}
                         className="w-full"
+                        onClick={() => handleRedeem(Number(reward.id))}
                       >
                         {!reward.available ? 'Coming Soon' : 
-                         mockUserData.totalPoints < reward.cost ? 'Insufficient Points' : 'Claim Reward'}
+                         userData.totalPoints < (reward.cost ?? reward.pointsCost) ? 'Insufficient Points' : (loading ? 'Processing...' : 'Claim Reward')}
                       </Button>
                     </div>
                   </div>
@@ -381,6 +465,35 @@ export default function RewardsPage() {
               </Card>
             ))}
           </div>
+
+          {/* Leaderboard */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Trophy className="h-5 w-5" />
+                <span>Top Contributors</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {leaderboard.map((u: any) => (
+                  <div key={u.rank} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 text-center font-semibold">{u.rank}</div>
+                      <div>
+                        <div className="font-medium">{u.username || u.address?.slice(0,6)+"..."+u.address?.slice(-4)}</div>
+                        <div className="text-xs text-muted-foreground">{u.address}</div>
+                      </div>
+                    </div>
+                    <div className="text-vpay-purple-600 font-semibold">{u.points?.toLocaleString()} pts</div>
+                  </div>
+                ))}
+                {leaderboard.length === 0 && (
+                  <div className="text-sm text-muted-foreground">No leaderboard data yet.</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

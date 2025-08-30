@@ -1,62 +1,140 @@
-import { Routes, Route } from 'react-router-dom'
-import Layout from '@/components/layout/Layout'
-import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import HomePage from '@/pages/HomePage'
+import React from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
+import Layout from './components/layout/Layout'
+// Simple loading component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="w-8 h-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600" />
+  </div>
+)
 
-// Auth pages
-import LoginPage from '@/pages/auth/LoginPage'
-import RegisterPage from '@/pages/auth/RegisterPage'
-import OnboardingPage from '@/pages/auth/OnboardingPage'
+// Pages
+import LandingPage from './pages/LandingPage'
+import HomePage from './pages/HomePage'
+import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
+import OnboardingPage from './pages/auth/OnboardingPage'
+import WalletPage from './pages/WalletPage'
+import TasksPage from './pages/TasksPage'
+import TaskMarketplace from './pages/TaskMarketplace'
+import RewardsPage from './pages/RewardsPage'
+import ProfilePage from './pages/ProfilePage'
+import SendPaymentPage from './pages/payments/SendPaymentPage'
+import ReceivePaymentPage from './pages/payments/ReceivePaymentPage'
 
-// Main pages
-import WalletPage from '@/pages/WalletPage'
-import TasksPage from '@/pages/TasksPage'
-import RewardsPage from '@/pages/RewardsPage'
-import ProfilePage from '@/pages/ProfilePage'
+// Protected Route Component
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth()
 
-// Payment pages
-import SendPaymentPage from '@/pages/payments/SendPaymentPage'
-import ReceivePaymentPage from '@/pages/payments/ReceivePaymentPage'
+  if (isLoading) {
+    return <LoadingSpinner />
+  }
 
-// Task pages
-import CreateTaskPage from '@/pages/tasks/CreateTaskPage'
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />
+}
 
-import { useTheme } from './contexts/ThemeContext'
+// Public Route Component (redirect to home if authenticated)
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth()
+
+  if (isLoading) {
+    return <LoadingSpinner />
+  }
+
+  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" />
+}
 
 function App() {
-  const { theme } = useTheme()
-
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/onboarding" element={<OnboardingPage />} />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={
+        <PublicRoute>
+          <LoginPage />
+        </PublicRoute>
+      } />
+      <Route path="/register" element={
+        <PublicRoute>
+          <RegisterPage />
+        </PublicRoute>
+      } />
 
-        {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<HomePage />} />
-          <Route path="wallet" element={<WalletPage />} />
-          <Route path="wallet/send" element={<SendPaymentPage />} />
-          <Route path="wallet/receive" element={<ReceivePaymentPage />} />
-          <Route path="tasks" element={<TasksPage />} />
-          <Route path="tasks/create" element={<CreateTaskPage />} />
-          <Route path="rewards" element={<RewardsPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-        </Route>
+      {/* Protected Routes with Layout */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <Layout>
+            <HomePage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/onboarding" element={
+        <ProtectedRoute>
+          <OnboardingPage />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/wallet" element={
+        <ProtectedRoute>
+          <Layout>
+            <WalletPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/tasks" element={
+        <ProtectedRoute>
+          <Layout>
+            <TasksPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/marketplace" element={
+        <ProtectedRoute>
+          <Layout>
+            <TaskMarketplace />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/rewards" element={
+        <ProtectedRoute>
+          <Layout>
+            <RewardsPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Layout>
+            <ProfilePage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/send" element={
+        <ProtectedRoute>
+          <Layout>
+            <SendPaymentPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/receive" element={
+        <ProtectedRoute>
+          <Layout>
+            <ReceivePaymentPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
 
-        {/* 404 route */}
-        <Route path="*" element={<div>Page not found</div>} />
-      </Routes>
-    </div>
+      {/* Catch all route */}
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   )
 }
 

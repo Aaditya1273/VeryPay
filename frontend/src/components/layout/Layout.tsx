@@ -1,6 +1,68 @@
-import { Outlet } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
+import { useWallet } from '../../contexts/WalletContext'
+import { formatCurrency, formatAddress } from '../../lib/utils'
+import { 
+  Home, 
+  Wallet, 
+  Briefcase, 
+  Gift, 
+  User, 
+  Sun, 
+  Moon, 
+  Menu, 
+  X,
+  LogOut,
+  Bell
+} from 'lucide-react'
 
-export default function Layout() {
+// Simple Button component
+interface ButtonProps {
+  children: React.ReactNode
+  variant?: 'default' | 'ghost'
+  size?: 'default' | 'icon'
+  className?: string
+  onClick?: () => void
+  [key: string]: any
+}
+
+const Button = ({ 
+  children, 
+  variant = 'default', 
+  size = 'default', 
+  className = '', 
+  onClick,
+  ...props 
+}: ButtonProps) => {
+  const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background'
+  
+  const variants = {
+    default: 'bg-purple-600 text-white hover:bg-purple-700',
+    ghost: 'hover:bg-gray-100 dark:hover:bg-gray-800',
+  }
+  
+  const sizes = {
+    default: 'h-10 py-2 px-4',
+    icon: 'h-10 w-10',
+  }
+  
+  return (
+    <button 
+      className={`${baseClasses} ${variants[variant] || variants.default} ${sizes[size] || sizes.default} ${className}`}
+      onClick={onClick}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+
+interface LayoutProps {
+  children: React.ReactNode
+}
+
+export default function Layout({ children }: LayoutProps) {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const location = useLocation()
@@ -221,29 +283,53 @@ export default function Layout() {
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      </div>
-
-      {/* Mobile Layout */}
-      <div className="lg:hidden">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="pb-20 p-4">
-          <Outlet />
+          {children}
         </main>
-        <BottomNav />
-      </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-background">
-            <Sidebar onClose={() => setSidebarOpen(false)} />
+        {/* Footer */}
+        <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="col-span-1 md:col-span-2">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">V</span>
+                  </div>
+                  <span className="text-xl font-bold text-gray-900 dark:text-white">VPay</span>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 text-sm max-w-md">
+                  VPay is a Web3 micro-economy platform that enables instant payments, 
+                  task completion rewards, and loyalty programs within the Very Network ecosystem.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Platform</h3>
+                <ul className="space-y-2">
+                  <li><Link to="/tasks" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Tasks</Link></li>
+                  <li><Link to="/rewards" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Rewards</Link></li>
+                  <li><Link to="/wallet" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Wallet</Link></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Support</h3>
+                <ul className="space-y-2">
+                  <li><a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Help Center</a></li>
+                  <li><a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Contact Us</a></li>
+                  <li><a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Privacy Policy</a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                &copy; 2024 VPay. All rights reserved. Built with &hearts; for the Very Network.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        </footer>
+      </div>
     </div>
   )
 }

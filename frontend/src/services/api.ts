@@ -103,12 +103,9 @@ export const tasksAPI = {
 // Rewards API
 export const rewardsAPI = {
   getRewards: () => api.get('/rewards'),
-  
-  claimReward: (rewardId: string) => api.post(`/rewards/${rewardId}/claim`),
-  
+  getUser: (address: string) => api.get(`/rewards/user/${address}`),
+  redeem: (rewardId: number | string, address: string) => api.post(`/rewards/${rewardId}/redeem`, { address }),
   getLeaderboard: () => api.get('/rewards/leaderboard'),
-  
-  getAchievements: () => api.get('/rewards/achievements'),
 }
 
 // User API

@@ -15,7 +15,7 @@ import authRoutes from './routes/auth'
 import walletRoutes from './routes/wallet'
 import tasksRoutes from './routes/tasks'
 import rewardsRoutes from './routes/rewards'
-import userRoutes from './routes/user'
+import userRoutes from './routes/users'
 
 // Load environment variables
 dotenv.config()

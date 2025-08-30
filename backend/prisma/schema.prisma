@@ -11,56 +11,32 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  email             String   @unique
-  username          String   @unique
-  password          String
-  walletAddress     String?  @unique
-  isVerified        Boolean  @default(false)
-  kycStatus         KycStatus @default(PENDING)
-  bio               String?
-  avatar            String?
-  skills            String[] // JSON array of skills
-  totalEarnings     Float    @default(0)
-  totalSpent        Float    @default(0)
-  rewardPoints      Int      @default(0)
-  tier              UserTier @default(BRONZE)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique
+  username      String   @unique
+  password      String
+  walletAddress String?  @unique
+  isVerified    Boolean  @default(false)
+  kycStatus     KycStatus @default(PENDING)
+  bio           String?
+  avatar        String?
+  skills        String[] @default([])
+  totalEarnings Float    @default(0)
+  totalSpent    Float    @default(0)
+  rewardPoints  Int      @default(0)
+  tier          String   @default("Bronze")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
-  sentTransactions     Transaction[] @relation("SentTransactions")
-  receivedTransactions Transaction[] @relation("ReceivedTransactions")
-  createdTasks         Task[]        @relation("TaskCreator")
-  appliedTasks         TaskApplication[]
-  assignedTasks        Task[]        @relation("TaskAssignee")
-  rewards              UserReward[]
-  achievements         UserAchievement[]
-  kycDocuments         KycDocument[]
+  createdTasks     Task[] @relation("TaskCreator")
+  applications     TaskApplication[]
+  userRewards      UserReward[]
+  userAchievements UserAchievement[]
+  kycDocuments     KycDocument[]
+  transactions     Transaction[]
 
   @@map("users")
-}
-
-model Transaction {
-  id            String            @id @default(cuid())
-  fromUserId    String
-  toUserId      String
-  amount        Float
-  currency      String            @default("VRC")
-  type          TransactionType
-  status        TransactionStatus @default(PENDING)
-  message       String?
-  blockchainTxHash String?
-  gasUsed       Float?
-  gasFee        Float?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-
-  // Relations
-  fromUser      User              @relation("SentTransactions", fields: [fromUserId], references: [id])
-  toUser        User              @relation("ReceivedTransactions", fields: [toUserId], references: [id])
-
-  @@map("transactions")
 }
 
 model Task {
@@ -69,22 +45,16 @@ model Task {
   description   String
   category      String
   budget        Float
-  currency      String     @default("VRC")
   deadline      DateTime
+  skills        String[]   @default([])
   status        TaskStatus @default(OPEN)
-  skills        String[]   // JSON array of required skills
-  location      String?
-  isRemote      Boolean    @default(true)
-  creatorId     String
-  assigneeId    String?
-  escrowAmount  Float?
-  completedAt   DateTime?
+  workerId      String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
   // Relations
   creator       User             @relation("TaskCreator", fields: [creatorId], references: [id])
-  assignee      User?            @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creatorId     String
   applications  TaskApplication[]
   attachments   TaskAttachment[]
 
@@ -141,6 +111,26 @@ model Reward {
   userRewards UserReward[]
 
   @@map("rewards")
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String
+  type        TransactionType
+  amount      Float
+  currency    String          @default("VRC")
+  status      TransactionStatus @default(PENDING)
+  fromAddress String?
+  toAddress   String?
+  txHash      String?
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  user        User            @relation(fields: [userId], references: [id])
+
+  @@map("transactions")
 }
 
 model UserReward {
@@ -212,27 +202,10 @@ enum KycStatus {
   REJECTED
 }
 
-enum UserTier {
-  BRONZE
-  SILVER
-  GOLD
-  PLATINUM
-}
-
-enum TransactionType {
-  PAYMENT
-  REWARD
-  TASK_PAYMENT
-  REFUND
-  WITHDRAWAL
-  DEPOSIT
-}
-
-enum TransactionStatus {
+enum ApplicationStatus {
   PENDING
-  CONFIRMED
-  FAILED
-  CANCELLED
+  ACCEPTED
+  REJECTED
 }
 
 enum TaskStatus {
@@ -240,27 +213,34 @@ enum TaskStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
-  DISPUTED
-}
-
-enum ApplicationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  WITHDRAWN
 }
 
 enum RewardType {
-  TOKEN
-  NFT
-  PHYSICAL
   DISCOUNT
-  FEATURE_ACCESS
+  CASHBACK
+  PHYSICAL_ITEM
+  DIGITAL_ITEM
+  EXPERIENCE
 }
 
 enum RewardStatus {
   PENDING
-  APPROVED
+  CLAIMED
   REDEEMED
   EXPIRED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT
+  REWARD
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
 }

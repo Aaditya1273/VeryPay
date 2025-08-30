@@ -9,12 +9,15 @@ export default function HomePage() {
   const { user } = useAuth()
   const { balance, isConnected, connectWallet } = useWallet()
 
+  // Fallback data for demo mode
+  const displayUser = user || { username: 'Demo User', rewardPoints: 150, tier: 'Bronze', totalEarnings: 250 }
+
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="text-center space-y-4">
         <h1 className="text-3xl font-bold text-foreground">
-          Welcome back, {user?.username}! 👋
+          Welcome to VPay, {displayUser?.username}! 👋
         </h1>
         <p className="text-muted-foreground">
           Ready to earn, spend, and grow in the VPay ecosystem?

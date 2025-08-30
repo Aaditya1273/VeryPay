@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
  * @dev Escrow contract for VPay mini-tasks and payments
  */
 contract VPayEscrow is ReentrancyGuard, Ownable, Pausable {
+    using SafeMath for uint256;
     using SafeERC20 for IERC20;
     
     IERC20 public immutable vrcToken;

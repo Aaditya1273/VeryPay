@@ -29,8 +29,6 @@ const io = new Server(server, {
   }
 })
 
-const PORT = process.env.PORT || 3001
-
 // Middleware
 app.use(helmet())
 app.use(cors({
@@ -79,11 +77,49 @@ app.set('io', io)
 app.use(notFound)
 app.use(errorHandler)
 
-// Start server
-server.listen(PORT, () => {
-  logger.info(`🚀 VPay Backend running on port ${PORT}`)
-  logger.info(`📊 Health check: http://localhost:${PORT}/health`)
-  logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
-})
+// Port management with automatic retry
+const startServer = async () => {
+  const basePort = parseInt(process.env.PORT || '3001', 10)
+  let currentPort = basePort
+  const maxRetries = 10
+
+  const tryPort = (port: number): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const testServer = server.listen(port, () => {
+        resolve(port)
+      })
+
+      testServer.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          if (port - basePort < maxRetries) {
+            logger.warn(`⚠️  Port ${port} is busy, trying ${port + 1}...`)
+            resolve(tryPort(port + 1))
+          } else {
+            reject(new Error(`Unable to find available port after ${maxRetries} attempts`))
+          }
+        } else {
+          reject(err)
+        }
+      })
+    })
+  }
+
+  try {
+    const finalPort = await tryPort(currentPort)
+    logger.info(`🚀 VPay Backend running on port ${finalPort}`)
+    logger.info(`📊 Health check: http://localhost:${finalPort}/health`)
+    logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
+    
+    if (finalPort !== basePort) {
+      logger.info(`✨ Auto-selected port ${finalPort} (${basePort} was busy)`)
+    }
+  } catch (error) {
+    logger.error('❌ Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+// Start server with port retry logic
+startServer()
 
 export default app

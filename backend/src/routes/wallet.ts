@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { body, validationResult } from 'express-validator'
 import { asyncHandler } from '../middleware/errorMiddleware'
@@ -10,7 +10,7 @@ const prisma = new PrismaClient()
 // @desc    Get wallet balance
 // @route   GET /api/wallet/balance
 // @access  Private
-router.get('/balance', protect, asyncHandler(async (req: any, res) => {
+router.get('/balance', protect, asyncHandler(async (req: any, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
     select: {
@@ -35,23 +35,17 @@ router.get('/balance', protect, asyncHandler(async (req: any, res) => {
 // @desc    Get transaction history
 // @route   GET /api/wallet/transactions
 // @access  Private
-router.get('/transactions', protect, asyncHandler(async (req: any, res) => {
+router.get('/transactions', protect, asyncHandler(async (req: any, res: Response) => {
   const page = parseInt(req.query.page) || 1
   const limit = parseInt(req.query.limit) || 20
   const skip = (page - 1) * limit
 
   const transactions = await prisma.transaction.findMany({
     where: {
-      OR: [
-        { fromUserId: req.user.id },
-        { toUserId: req.user.id }
-      ]
+      userId: req.user.id
     },
     include: {
-      fromUser: {
-        select: { username: true, avatar: true }
-      },
-      toUser: {
+      user: {
         select: { username: true, avatar: true }
       }
     },
@@ -62,10 +56,7 @@ router.get('/transactions', protect, asyncHandler(async (req: any, res) => {
 
   const total = await prisma.transaction.count({
     where: {
-      OR: [
-        { fromUserId: req.user.id },
-        { toUserId: req.user.id }
-      ]
+      userId: req.user.id
     }
   })
 
@@ -92,7 +83,7 @@ router.post('/send',
     body('amount').isFloat({ min: 0.01 }),
     body('message').optional().isLength({ max: 500 }),
   ],
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: any, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
@@ -129,25 +120,34 @@ router.post('/send',
       return res.status(400).json({ message: 'Insufficient balance' })
     }
 
-    // Create transaction
+    // Create transaction for sender
     const transaction = await prisma.transaction.create({
       data: {
-        fromUserId: req.user.id,
-        toUserId: recipient.id,
-        amount,
+        userId: req.user.id,
+        amount: -amount, // Negative for outgoing payment
         type: 'PAYMENT',
-        status: 'CONFIRMED',
-        message,
-        // In real implementation, you'd interact with blockchain here
-        blockchainTxHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+        status: 'COMPLETED',
+        description: message || `Payment to ${recipient.username}`,
+        toAddress: recipient.walletAddress,
+        txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
       },
       include: {
-        fromUser: {
-          select: { username: true, avatar: true }
-        },
-        toUser: {
+        user: {
           select: { username: true, avatar: true }
         }
+      }
+    })
+
+    // Create transaction for recipient
+    await prisma.transaction.create({
+      data: {
+        userId: recipient.id,
+        amount: amount, // Positive for incoming payment
+        type: 'PAYMENT',
+        status: 'COMPLETED',
+        description: message || `Payment from ${req.user.username}`,
+        fromAddress: req.user.walletAddress,
+        txHash: transaction.txHash,
       }
     })
 
@@ -186,7 +186,7 @@ router.post('/request',
     body('amount').isFloat({ min: 0.01 }),
     body('description').optional().isLength({ max: 500 }),
   ],
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: any, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })

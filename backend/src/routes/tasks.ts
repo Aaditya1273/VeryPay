@@ -1,8 +1,17 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { body, validationResult } from 'express-validator'
 import { asyncHandler } from '../middleware/errorMiddleware'
 import { protect, kycApproved } from '../middleware/authMiddleware'
+
+// Extend Request interface to include user property
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string
+    username: string
+    email: string
+  }
+}
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -10,7 +19,7 @@ const prisma = new PrismaClient()
 // @desc    Get all tasks
 // @route   GET /api/tasks
 // @access  Public
-router.get('/', asyncHandler(async (req: any, res: any) => {
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1
   const limit = parseInt(req.query.limit as string) || 20
   const category = req.query.category as string
@@ -35,7 +44,7 @@ router.get('/', asyncHandler(async (req: any, res: any) => {
       creator: {
         select: { id: true, username: true, avatar: true, tier: true }
       },
-      assignee: {
+      worker: {
         select: { id: true, username: true, avatar: true }
       },
       applications: {
@@ -64,14 +73,14 @@ router.get('/', asyncHandler(async (req: any, res: any) => {
 // @desc    Get single task
 // @route   GET /api/tasks/:id
 // @access  Public
-router.get('/:id', asyncHandler(async (req: any, res: any) => {
+router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   const task = await prisma.task.findUnique({
     where: { id: req.params.id },
     include: {
       creator: {
         select: { id: true, username: true, avatar: true, tier: true }
       },
-      assignee: {
+      worker: {
         select: { id: true, username: true, avatar: true }
       },
       applications: {
@@ -109,7 +118,7 @@ router.post('/',
     body('deadline').isISO8601(),
     body('skills').isArray(),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
@@ -124,9 +133,8 @@ router.post('/',
         category,
         budget,
         deadline: new Date(deadline),
-        skills,
+        skills: skills.join(','), // Convert array to comma-separated string
         location,
-        isRemote: isRemote ?? true,
         creatorId: req.user.id,
       },
       include: {
@@ -154,7 +162,7 @@ router.post('/:id/apply',
     body('bidAmount').isFloat({ min: 1 }),
     body('estimatedTime').notEmpty(),
   ],
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
@@ -226,7 +234,7 @@ router.post('/:id/apply',
 // @access  Private
 router.put('/:id/applications/:applicationId/accept',
   protect,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const task = await prisma.task.findUnique({
       where: { id: req.params.id }
     })
@@ -258,8 +266,7 @@ router.put('/:id/applications/:applicationId/accept',
         where: { id: req.params.id },
         data: {
           status: 'IN_PROGRESS',
-          assigneeId: application.applicantId,
-          escrowAmount: application.bidAmount
+          workerId: application.applicantId
         }
       }),
       // Reject other applications
@@ -291,10 +298,10 @@ router.put('/:id/applications/:applicationId/accept',
 // @access  Private
 router.put('/:id/complete',
   protect,
-  asyncHandler(async (req: any, res: any) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const task = await prisma.task.findUnique({
       where: { id: req.params.id },
-      include: { assignee: true }
+      include: { worker: true }
     })
 
     if (!task) {
@@ -319,35 +326,47 @@ router.put('/:id/complete',
         }
       })
 
-      // Create payment transaction
+      // Create payment transaction for creator (outgoing)
       await tx.transaction.create({
         data: {
-          fromUserId: task.creatorId,
-          toUserId: task.assigneeId!,
-          amount: task.escrowAmount!,
-          type: 'TASK_PAYMENT',
-          status: 'CONFIRMED',
-          blockchainTxHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+          userId: task.creatorId,
+          amount: -task.budget,
+          type: 'PAYMENT',
+          status: 'COMPLETED',
+          description: `Task payment for "${task.title}"`,
+          txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
+        }
+      })
+
+      // Create payment transaction for worker (incoming)
+      await tx.transaction.create({
+        data: {
+          userId: task.workerId!,
+          amount: task.budget,
+          type: 'PAYMENT',
+          status: 'COMPLETED',
+          description: `Task payment from "${task.title}"`,
+          txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
         }
       })
 
       // Update user balances
       await tx.user.update({
         where: { id: task.creatorId },
-        data: { totalSpent: { increment: task.escrowAmount! } }
+        data: { totalSpent: { increment: task.budget } }
       })
 
       await tx.user.update({
-        where: { id: task.assigneeId! },
-        data: { totalEarnings: { increment: task.escrowAmount! } }
+        where: { id: task.workerId! },
+        data: { totalEarnings: { increment: task.budget } }
       })
 
       return task
     })
 
-    // Notify assignee
+    // Notify worker
     const io = req.app.get('io')
-    io.to(`user-${task.assigneeId}`).emit('task-completed', {
+    io.to(`user-${task.workerId}`).emit('task-completed', {
       task: updatedTask,
       message: `Task "${task.title}" has been completed! Payment sent.`
     })

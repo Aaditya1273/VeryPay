@@ -1,8 +1,17 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { body, validationResult } from 'express-validator'
 import { asyncHandler } from '../middleware/errorMiddleware'
 import { protect } from '../middleware/authMiddleware'
+
+// Extend Request interface to include user property
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string
+    username: string
+    email: string
+  }
+}
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -10,7 +19,7 @@ const prisma = new PrismaClient()
 // @desc    Get all rewards
 // @route   GET /api/rewards
 // @access  Public
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const type = req.query.type as string
   const isActive = req.query.active === 'true'
 
@@ -32,7 +41,7 @@ router.get('/', asyncHandler(async (req, res) => {
 // @desc    Get user rewards
 // @route   GET /api/rewards/user
 // @access  Private
-router.get('/user', protect, asyncHandler(async (req: any, res) => {
+router.get('/user', protect, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const userRewards = await prisma.userReward.findMany({
     where: { userId: req.user.id },
     include: {
@@ -52,7 +61,7 @@ router.get('/user', protect, asyncHandler(async (req: any, res) => {
 // @access  Private
 router.post('/:id/claim',
   protect,
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const reward = await prisma.reward.findUnique({
       where: { id: req.params.id }
     })
@@ -115,7 +124,7 @@ router.post('/:id/claim',
 // @desc    Get achievements
 // @route   GET /api/rewards/achievements
 // @access  Public
-router.get('/achievements', asyncHandler(async (req, res) => {
+router.get('/achievements', asyncHandler(async (req: Request, res: Response) => {
   const achievements = await prisma.achievement.findMany({
     where: { isActive: true },
     orderBy: { points: 'asc' }
@@ -130,7 +139,7 @@ router.get('/achievements', asyncHandler(async (req, res) => {
 // @desc    Get user achievements
 // @route   GET /api/rewards/achievements/user
 // @access  Private
-router.get('/achievements/user', protect, asyncHandler(async (req: any, res) => {
+router.get('/achievements/user', protect, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const userAchievements = await prisma.userAchievement.findMany({
     where: { userId: req.user.id },
     include: {
@@ -150,11 +159,11 @@ router.get('/achievements/user', protect, asyncHandler(async (req: any, res) => 
 // @access  Private
 router.post('/achievements/check',
   protect,
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       include: {
-        sentTransactions: true,
+        transactions: true,
         assignedTasks: { where: { status: 'COMPLETED' } },
         userAchievements: true
       }
@@ -172,7 +181,7 @@ router.post('/achievements/check',
     for (const achievement of achievements) {
       // Check if already unlocked
       const alreadyUnlocked = user.userAchievements.some(
-        ua => ua.achievementId === achievement.id
+        (ua: any) => ua.achievementId === achievement.id
       )
 
       if (alreadyUnlocked) continue
@@ -182,7 +191,7 @@ router.post('/achievements/check',
 
       switch (condition.type) {
         case 'transaction_count':
-          shouldUnlock = user.sentTransactions.length >= condition.value
+          shouldUnlock = user.transactions.length >= condition.value
           break
         case 'completed_tasks':
           shouldUnlock = user.assignedTasks.length >= condition.value

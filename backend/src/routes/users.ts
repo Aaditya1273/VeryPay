@@ -1,10 +1,18 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { body, validationResult } from 'express-validator'
 import { asyncHandler } from '../middleware/errorMiddleware'
 import { protect } from '../middleware/authMiddleware'
 import multer from 'multer'
 import path from 'path'
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    email: string;
+    username: string;
+  };
+}
 
 const router = express.Router()
 const prisma = new PrismaClient()
@@ -39,7 +47,7 @@ const upload = multer({
 // @desc    Get user profile
 // @route   GET /api/users/profile
 // @access  Private
-router.get('/profile', protect, asyncHandler(async (req: any, res) => {
+router.get('/profile', protect, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
     select: {
@@ -77,7 +85,7 @@ router.put('/profile',
     body('bio').optional().isLength({ max: 500 }),
     body('skills').optional().isArray(),
   ],
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
@@ -139,7 +147,7 @@ router.put('/profile',
 router.post('/avatar',
   protect,
   upload.single('avatar'),
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' })
     }
@@ -172,7 +180,7 @@ router.put('/wallet',
   [
     body('walletAddress').isEthereumAddress(),
   ],
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
@@ -214,7 +222,7 @@ router.put('/wallet',
 // @desc    Get user stats
 // @route   GET /api/users/stats
 // @access  Private
-router.get('/stats', protect, asyncHandler(async (req: any, res) => {
+router.get('/stats', protect, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const [
     totalTransactions,
     completedTasks,
@@ -224,15 +232,12 @@ router.get('/stats', protect, asyncHandler(async (req: any, res) => {
   ] = await Promise.all([
     prisma.transaction.count({
       where: {
-        OR: [
-          { fromUserId: req.user.id },
-          { toUserId: req.user.id }
-        ]
+        userId: req.user.id
       }
     }),
     prisma.task.count({
       where: {
-        assigneeId: req.user.id,
+        workerId: req.user.id,
         status: 'COMPLETED'
       }
     }),
@@ -276,7 +281,7 @@ router.get('/stats', protect, asyncHandler(async (req: any, res) => {
 // @desc    Get public user profile
 // @route   GET /api/users/:username
 // @access  Public
-router.get('/:username', asyncHandler(async (req, res) => {
+router.get('/:username', asyncHandler(async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { username: req.params.username },
     select: {
@@ -293,7 +298,7 @@ router.get('/:username', asyncHandler(async (req, res) => {
       },
       assignedTasks: {
         where: { status: 'COMPLETED' },
-        select: { id: true, title: true, completedAt: true }
+        select: { id: true, title: true, createdAt: true }
       }
     }
   })
@@ -315,15 +320,15 @@ router.get('/:username', asyncHandler(async (req, res) => {
 // @desc    Search users
 // @route   GET /api/users/search/:query
 // @access  Public
-router.get('/search/:query', asyncHandler(async (req, res) => {
+router.get('/search/:query', asyncHandler(async (req: Request, res: Response) => {
   const query = req.params.query
   const limit = parseInt(req.query.limit as string) || 10
 
   const users = await prisma.user.findMany({
     where: {
       OR: [
-        { username: { contains: query, mode: 'insensitive' } },
-        { bio: { contains: query, mode: 'insensitive' } }
+        { username: { contains: query } },
+        { bio: { contains: query } }
       ]
     },
     select: {

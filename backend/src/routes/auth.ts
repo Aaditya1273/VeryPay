@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
@@ -11,10 +11,14 @@ const router = express.Router()
 const prisma = new PrismaClient()
 
 // Generate JWT token
-const generateToken = (id: string) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET!, {
+const generateToken = (id: string): string => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET is not defined')
+  }
+  return jwt.sign({ id }, secret as jwt.Secret, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  })
+  } as jwt.SignOptions)
 }
 
 // @desc    Register user
@@ -27,7 +31,7 @@ router.post('/register',
     body('password').isLength({ min: 6 }),
     body('username').isLength({ min: 3 }).isAlphanumeric(),
   ],
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
@@ -89,7 +93,7 @@ router.post('/login',
     body('email').isEmail().normalizeEmail(),
     body('password').exists(),
   ],
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() })
@@ -127,7 +131,7 @@ router.post('/login',
 // @desc    Get current user
 // @route   GET /api/auth/me
 // @access  Private
-router.get('/me', protect, asyncHandler(async (req: any, res) => {
+router.get('/me', protect, asyncHandler(async (req: any, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
     select: {
@@ -158,7 +162,7 @@ router.get('/me', protect, asyncHandler(async (req: any, res) => {
 // @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
-router.post('/logout', protect, asyncHandler(async (req, res) => {
+router.post('/logout', protect, asyncHandler(async (req: Request, res: Response) => {
   // In a real app, you might want to blacklist the token
   res.json({
     success: true,

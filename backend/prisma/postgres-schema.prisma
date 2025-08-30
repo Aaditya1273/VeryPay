@@ -1,12 +1,12 @@
-// SQLite-compatible Prisma schema
-// For quick development and testing
+// PostgreSQL Prisma schema (RECOMMENDED)
+// Supports native arrays and enums
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -17,10 +17,10 @@ model User {
   password      String
   walletAddress String?  @unique
   isVerified    Boolean  @default(false)
-  kycStatus     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  kycStatus     KycStatus @default(PENDING)
   bio           String?
   avatar        String?
-  skills        String   @default("") // Comma-separated string: "javascript,react,nodejs"
+  skills        String[] @default([])
   totalEarnings Float    @default(0)
   totalSpent    Float    @default(0)
   rewardPoints  Int      @default(0)
@@ -30,7 +30,6 @@ model User {
 
   // Relations
   createdTasks     Task[] @relation("TaskCreator")
-  assignedTasks    Task[] @relation("TaskWorker")
   applications     TaskApplication[]
   userRewards      UserReward[]
   userAchievements UserAchievement[]
@@ -47,9 +46,8 @@ model Task {
   category      String
   budget        Float
   deadline      DateTime
-  skills        String     @default("") // Comma-separated: "design,figma,ui"
-  status        String     @default("OPEN") // OPEN, IN_PROGRESS, COMPLETED, CANCELLED
-  location      String?    // Added location field
+  skills        String[]   @default([])
+  status        TaskStatus @default(OPEN)
   workerId      String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
@@ -57,7 +55,6 @@ model Task {
   // Relations
   creator       User             @relation("TaskCreator", fields: [creatorId], references: [id])
   creatorId     String
-  worker        User?            @relation("TaskWorker", fields: [workerId], references: [id])
   applications  TaskApplication[]
   attachments   TaskAttachment[]
 
@@ -71,7 +68,7 @@ model TaskApplication {
   proposal      String
   bidAmount     Float
   estimatedTime String
-  status        String    @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  status        ApplicationStatus @default(PENDING)
   appliedAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -102,7 +99,7 @@ model Reward {
   id          String       @id @default(cuid())
   title       String
   description String
-  type        String       // DISCOUNT, CASHBACK, PHYSICAL_ITEM, DIGITAL_ITEM, EXPERIENCE
+  type        RewardType
   cost        Int          // Points required
   value       Float?       // Monetary value if applicable
   isActive    Boolean      @default(true)
@@ -119,10 +116,10 @@ model Reward {
 model Transaction {
   id          String          @id @default(cuid())
   userId      String
-  type        String          // DEPOSIT, WITHDRAWAL, PAYMENT, REWARD, REFUND
+  type        TransactionType
   amount      Float
   currency    String          @default("VRC")
-  status      String          @default("PENDING") // PENDING, COMPLETED, FAILED, CANCELLED
+  status      TransactionStatus @default(PENDING)
   fromAddress String?
   toAddress   String?
   txHash      String?
@@ -140,7 +137,7 @@ model UserReward {
   id         String       @id @default(cuid())
   userId     String
   rewardId   String
-  status     String       @default("PENDING") // PENDING, CLAIMED, REDEEMED, EXPIRED
+  status     RewardStatus @default(PENDING)
   claimedAt  DateTime     @default(now())
   redeemedAt DateTime?
 
@@ -187,7 +184,7 @@ model KycDocument {
   documentType   String    // passport, license, etc.
   documentNumber String
   documentImage  String    // File path
-  status         String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  status         KycStatus @default(PENDING)
   rejectionReason String?
   submittedAt    DateTime  @default(now())
   reviewedAt     DateTime?
@@ -196,4 +193,54 @@ model KycDocument {
   user           User      @relation(fields: [userId], references: [id])
 
   @@map("kyc_documents")
+}
+
+// Enums (PostgreSQL native support)
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RewardType {
+  DISCOUNT
+  CASHBACK
+  PHYSICAL_ITEM
+  DIGITAL_ITEM
+  EXPERIENCE
+}
+
+enum RewardStatus {
+  PENDING
+  CLAIMED
+  REDEEMED
+  EXPIRED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT
+  REWARD
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
 }

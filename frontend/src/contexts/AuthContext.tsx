@@ -7,6 +7,7 @@ interface User {
   id: string
   email: string
   username: string
+  fullName?: string
   avatar?: string
   walletAddress?: string
   isVerified: boolean
@@ -59,17 +60,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
+    // Validate inputs
+    if (!email || !password) {
+      toast.error('Email and password are required')
+      throw new Error('Missing credentials')
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Please enter a valid email address')
+      throw new Error('Invalid email format')
+    }
+
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters long')
+      throw new Error('Password too short')
+    }
+
     try {
       setIsLoading(true)
       const response = await authAPI.login({ email, password })
       
+      if (!response.data.token || !response.data.user) {
+        throw new Error('Invalid response from server')
+      }
+      
       localStorage.setItem('vpay-token', response.data.token)
       setUser(response.data.user)
       
-      toast.success('Welcome back!')
-      navigate('/')
+      toast.success(`Welcome back, ${response.data.user.username}!`)
+      navigate('/dashboard')
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Login failed'
+      const message = error.response?.data?.message || error.message || 'Login failed'
       toast.error(message)
       throw error
     } finally {
@@ -78,17 +99,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const register = async (email: string, password: string, username: string) => {
+    // Validate inputs
+    if (!email || !password || !username) {
+      toast.error('All fields are required')
+      throw new Error('Missing required fields')
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Please enter a valid email address')
+      throw new Error('Invalid email format')
+    }
+
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long')
+      throw new Error('Password too short')
+    }
+
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      toast.error('Password must contain at least one uppercase letter, one lowercase letter, and one number')
+      throw new Error('Password too weak')
+    }
+
+    if (username.length < 3 || username.length > 20) {
+      toast.error('Username must be between 3 and 20 characters')
+      throw new Error('Invalid username length')
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      toast.error('Username can only contain letters, numbers, and underscores')
+      throw new Error('Invalid username format')
+    }
+
     try {
       setIsLoading(true)
       const response = await authAPI.register({ email, password, username })
       
+      if (!response.data.token || !response.data.user) {
+        throw new Error('Invalid response from server')
+      }
+      
       localStorage.setItem('vpay-token', response.data.token)
       setUser(response.data.user)
       
-      toast.success('Account created successfully!')
+      toast.success(`Welcome to VPay, ${response.data.user.username}!`)
       navigate('/onboarding')
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Registration failed'
+      const message = error.response?.data?.message || error.message || 'Registration failed'
       toast.error(message)
       throw error
     } finally {
@@ -96,11 +152,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem('vpay-token')
-    setUser(null)
-    toast.success('Logged out successfully')
-    navigate('/login')
+  const logout = async () => {
+    try {
+      // Call logout API to invalidate token on server
+      await authAPI.logout()
+    } catch (error) {
+      // Continue with logout even if API call fails
+      console.error('Logout API call failed:', error)
+    } finally {
+      localStorage.removeItem('vpay-token')
+      setUser(null)
+      toast.success('Logged out successfully')
+      navigate('/login')
+    }
   }
 
   const updateUser = (userData: Partial<User>) => {

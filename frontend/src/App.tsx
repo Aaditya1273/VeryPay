@@ -22,6 +22,7 @@ import RewardsPage from './pages/RewardsPage'
 import ProfilePage from './pages/ProfilePage'
 import SendPaymentPage from './pages/payments/SendPaymentPage'
 import ReceivePaymentPage from './pages/payments/ReceivePaymentPage'
+import CreateTaskPage from './pages/tasks/CreateTaskPage'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -128,6 +129,36 @@ function App() {
         <ProtectedRoute>
           <Layout>
             <ReceivePaymentPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/tasks/create" element={
+        <ProtectedRoute>
+          <Layout>
+            <CreateTaskPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/tasks/:id" element={
+        <ProtectedRoute>
+          <Layout>
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-bold mb-4">Task Details</h2>
+              <p className="text-muted-foreground">Task details page coming soon!</p>
+            </div>
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/tasks/:id/apply" element={
+        <ProtectedRoute>
+          <Layout>
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-bold mb-4">Apply to Task</h2>
+              <p className="text-muted-foreground">Task application page coming soon!</p>
+            </div>
           </Layout>
         </ProtectedRoute>
       } />

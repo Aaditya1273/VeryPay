@@ -38,7 +38,50 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   })
 }))
 
-// @desc    Get user rewards
+// @desc    Get user rewards and points
+// @route   GET /api/rewards/user/:address
+// @access  Public
+router.get('/user/:address', asyncHandler(async (req: Request, res: Response) => {
+  const { address } = req.params
+  
+  // Find user by wallet address
+  const user = await prisma.user.findFirst({
+    where: { walletAddress: address },
+    include: {
+      userRewards: {
+        include: { reward: true }
+      }
+    }
+  })
+
+  if (!user) {
+    return res.json({
+      success: true,
+      points: 0,
+      availableRewards: []
+    })
+  }
+
+  // Get available rewards (active rewards)
+  const availableRewards = await prisma.reward.findMany({
+    where: { isActive: true },
+    orderBy: { cost: 'asc' }
+  })
+
+  res.json({
+    success: true,
+    data: {
+      points: user.rewardPoints || 0,
+      availableRewards: availableRewards.map(reward => ({
+        ...reward,
+        pointsCost: reward.cost,
+        name: reward.title
+      }))
+    }
+  })
+}))
+
+// @desc    Get user rewards (authenticated)
 // @route   GET /api/rewards/user
 // @access  Private
 router.get('/user', protect, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -151,6 +194,110 @@ router.get('/achievements/user', protect, asyncHandler(async (req: Authenticated
   res.json({
     success: true,
     userAchievements
+  })
+}))
+
+// @desc    Get leaderboard
+// @route   GET /api/rewards/leaderboard
+// @access  Public
+router.get('/leaderboard', asyncHandler(async (req: Request, res: Response) => {
+  const users = await prisma.user.findMany({
+    where: {
+      rewardPoints: { gt: 0 }
+    },
+    select: {
+      id: true,
+      username: true,
+      walletAddress: true,
+      rewardPoints: true
+    },
+    orderBy: { rewardPoints: 'desc' },
+    take: 10
+  })
+
+  const leaderboard = users.map((user, index) => ({
+    rank: index + 1,
+    username: user.username,
+    address: user.walletAddress,
+    points: user.rewardPoints
+  }))
+
+  res.json({
+    success: true,
+    data: { leaderboard }
+  })
+}))
+
+// @desc    Redeem reward
+// @route   POST /api/rewards/:id/redeem
+// @access  Public
+router.post('/:id/redeem', asyncHandler(async (req: Request, res: Response) => {
+  const { address } = req.body
+  const rewardId = req.params.id
+
+  if (!address) {
+    return res.status(400).json({ error: 'Wallet address required' })
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { walletAddress: address }
+  })
+
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' })
+  }
+
+  const reward = await prisma.reward.findUnique({
+    where: { id: rewardId }
+  })
+
+  if (!reward) {
+    return res.status(404).json({ error: 'Reward not found' })
+  }
+
+  if (!reward.isActive) {
+    return res.status(400).json({ error: 'Reward is not active' })
+  }
+
+  if (user.rewardPoints < reward.cost) {
+    return res.status(400).json({ error: 'Insufficient points' })
+  }
+
+  // Check stock availability
+  if (reward.stock !== null && reward.stock <= 0) {
+    return res.status(400).json({ error: 'Reward out of stock' })
+  }
+
+  // Create user reward and update points
+  const userReward = await prisma.$transaction(async (tx) => {
+    const userReward = await tx.userReward.create({
+      data: {
+        userId: user.id,
+        rewardId: reward.id,
+        status: 'APPROVED'
+      },
+      include: { reward: true }
+    })
+
+    await tx.user.update({
+      where: { id: user.id },
+      data: { rewardPoints: { decrement: reward.cost } }
+    })
+
+    if (reward.stock !== null) {
+      await tx.reward.update({
+        where: { id: reward.id },
+        data: { stock: { decrement: 1 } }
+      })
+    }
+
+    return userReward
+  })
+
+  res.json({
+    success: true,
+    userReward,
+    message: 'Reward redeemed successfully'
   })
 }))
 

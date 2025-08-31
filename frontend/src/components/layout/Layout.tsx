@@ -101,7 +101,7 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   const navigationItems = [
-    { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Wallet', href: '/wallet', icon: Wallet },
     { name: 'Tasks', href: '/tasks', icon: Briefcase },
     { name: 'Rewards', href: '/rewards', icon: Gift },
@@ -109,8 +109,8 @@ export default function Layout({ children }: LayoutProps) {
   ]
 
   const isActiveRoute = (href: string) => {
-    if (href === '/') {
-      return location.pathname === '/'
+    if (href === '/dashboard') {
+      return location.pathname === '/dashboard'
     }
     return location.pathname.startsWith(href)
   }
@@ -166,10 +166,26 @@ export default function Layout({ children }: LayoutProps) {
                 )}
 
                 {/* Notifications */}
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-                </Button>
+                <div className="relative group">
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    {/* Only show notification badge when there are actual notifications */}
+                  </Button>
+                  
+                  {/* Notification Dropdown */}
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="p-4">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Notifications</h3>
+                      <div className="text-center py-8">
+                        <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          You'll see updates about payments, tasks, and rewards here
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Theme Toggle */}
                 <Button
@@ -286,49 +302,6 @@ export default function Layout({ children }: LayoutProps) {
           {children}
         </main>
 
-        {/* Footer */}
-        <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div className="col-span-1 md:col-span-2">
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">V</span>
-                  </div>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">VPay</span>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 text-sm max-w-md">
-                  VPay is a Web3 micro-economy platform that enables instant payments, 
-                  task completion rewards, and loyalty programs within the Very Network ecosystem.
-                </p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Platform</h3>
-                <ul className="space-y-2">
-                  <li><Link to="/tasks" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Tasks</Link></li>
-                  <li><Link to="/rewards" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Rewards</Link></li>
-                  <li><Link to="/wallet" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Wallet</Link></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Support</h3>
-                <ul className="space-y-2">
-                  <li><a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Help Center</a></li>
-                  <li><a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Contact Us</a></li>
-                  <li><a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">Privacy Policy</a></li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                &copy; 2024 VPay. All rights reserved. Built with &hearts; for the Very Network.
-              </p>
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   )

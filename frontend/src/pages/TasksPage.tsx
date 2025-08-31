@@ -1,88 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils'
-import { Search, Filter, Plus, Clock, MapPin, Star, Users } from 'lucide-react'
+import { Search, Filter, Plus, Clock, MapPin, Star, Users, Loader2 } from 'lucide-react'
+import { tasksAPI } from '@/services/api'
+import toast from 'react-hot-toast'
 
-// Mock task data
-const mockTasks = [
-  {
-    id: '1',
-    title: 'Design a Logo for Coffee Shop',
-    description: 'Looking for a creative logo design for my new coffee shop. Should be modern, warm, and inviting.',
-    category: 'Design',
-    budget: 150,
-    duration: '3-5 days',
-    location: 'Remote',
-    poster: 'coffee_shop',
-    posterRating: 4.8,
-    skills: ['Graphic Design', 'Logo Design', 'Adobe Illustrator'],
-    applications: 12,
-    postedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    status: 'open'
-  },
-  {
-    id: '2',
-    title: 'Write Product Descriptions',
-    description: 'Need compelling product descriptions for 20 items in my online store. Experience with e-commerce copy preferred.',
-    category: 'Writing',
-    budget: 80,
-    duration: '2-3 days',
-    location: 'Remote',
-    poster: 'store_owner',
-    posterRating: 4.6,
-    skills: ['Copywriting', 'E-commerce', 'SEO'],
-    applications: 8,
-    postedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    status: 'open'
-  },
-  {
-    id: '3',
-    title: 'Social Media Management',
-    description: 'Manage Instagram and Twitter accounts for a tech startup. Create engaging content and respond to comments.',
-    category: 'Marketing',
-    budget: 200,
-    duration: '1 week',
-    location: 'Remote',
-    poster: 'tech_startup',
-    posterRating: 4.9,
-    skills: ['Social Media', 'Content Creation', 'Community Management'],
-    applications: 15,
-    postedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    status: 'open'
-  },
-  {
-    id: '4',
-    title: 'Data Entry Project',
-    description: 'Enter customer data from PDF files into spreadsheet. Attention to detail required.',
-    category: 'Data Entry',
-    budget: 50,
-    duration: '1-2 days',
-    location: 'Remote',
-    poster: 'data_company',
-    posterRating: 4.5,
-    skills: ['Data Entry', 'Excel', 'Attention to Detail'],
-    applications: 25,
-    postedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-    status: 'open'
-  },
-  {
-    id: '5',
-    title: 'Mobile App Testing',
-    description: 'Test new mobile app for bugs and usability issues. Provide detailed feedback report.',
-    category: 'Testing',
-    budget: 75,
-    duration: '2-3 days',
-    location: 'Remote',
-    poster: 'app_developer',
-    posterRating: 4.7,
-    skills: ['QA Testing', 'Mobile Apps', 'Bug Reporting'],
-    applications: 6,
-    postedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-    status: 'open'
+interface Task {
+  id: string
+  title: string
+  description: string
+  category: string
+  budget: number
+  duration?: string
+  location: string
+  poster: {
+    username: string
+    rating: number
+    avatar?: string
   }
-]
+  skills: string[]
+  applications: number
+  postedAt: string
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled'
+}
 
 const categories = ['All', 'Design', 'Writing', 'Marketing', 'Data Entry', 'Testing', 'Development', 'Translation']
 
@@ -90,15 +32,40 @@ export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [sortBy, setSortBy] = useState('newest')
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredTasks = mockTasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         task.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))
-    
-    const matchesCategory = selectedCategory === 'All' || task.category === selectedCategory
-    
-    return matchesSearch && matchesCategory
+  useEffect(() => {
+    fetchTasks()
+  }, [selectedCategory, sortBy])
+
+  const fetchTasks = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await tasksAPI.getTasks({
+        category: selectedCategory === 'All' ? undefined : selectedCategory,
+        search: searchQuery || undefined,
+        page: 1,
+        limit: 50
+      })
+      setTasks(response.data.tasks || [])
+    } catch (err: any) {
+      setError('Failed to load tasks. Please try again.')
+      toast.error('Failed to load tasks')
+      console.error('Error fetching tasks:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredTasks = tasks.filter(task => {
+    if (!searchQuery) return true
+    const query = searchQuery.toLowerCase()
+    return task.title.toLowerCase().includes(query) ||
+           task.description.toLowerCase().includes(query) ||
+           task.skills.some(skill => skill.toLowerCase().includes(query))
   })
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
@@ -143,6 +110,7 @@ export default function TasksPage() {
                 placeholder="Search tasks, skills, or keywords..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && fetchTasks()}
                 className="w-full pl-10 pr-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
@@ -191,9 +159,30 @@ export default function TasksPage() {
         </p>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-vpay-purple-600" />
+          <span className="ml-2 text-muted-foreground">Loading tasks...</span>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="text-center py-12 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+          <CardContent>
+            <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+            <Button variant="outline" onClick={fetchTasks}>
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Task List */}
-      <div className="space-y-4">
-        {sortedTasks.map((task) => (
+      {!loading && !error && (
+        <div className="space-y-4">
+          {sortedTasks.map((task) => (
           <Card key={task.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="space-y-4">
@@ -247,14 +236,18 @@ export default function TasksPage() {
                 {/* Footer */}
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                      <span className="text-sm">👤</span>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                      {task.poster.avatar ? (
+                        <img src={task.poster.avatar} alt={task.poster.username} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-sm">👤</span>
+                      )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium">@{task.poster}</p>
+                      <p className="text-sm font-medium">@{task.poster.username}</p>
                       <div className="flex items-center space-x-1">
                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs text-muted-foreground">{task.posterRating}</span>
+                        <span className="text-xs text-muted-foreground">{task.poster.rating}</span>
                       </div>
                     </div>
                   </div>
@@ -271,26 +264,39 @@ export default function TasksPage() {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Empty State */}
-      {sortedTasks.length === 0 && (
+      {!loading && !error && sortedTasks.length === 0 && (
         <Card className="text-center py-12">
           <CardContent>
             <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="h-10 w-10 text-gray-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">No tasks found</h3>
+            <h3 className="text-xl font-semibold mb-2">
+              {tasks.length === 0 ? 'No tasks available' : 'No tasks found'}
+            </h3>
             <p className="text-muted-foreground mb-6">
-              Try adjusting your search criteria or browse different categories
+              {tasks.length === 0 
+                ? 'Be the first to post a task and start earning!'
+                : 'Try adjusting your search criteria or browse different categories'
+              }
             </p>
-            <Button variant="outline" onClick={() => {
-              setSearchQuery('')
-              setSelectedCategory('All')
-            }}>
-              Clear Filters
-            </Button>
+            {tasks.length === 0 ? (
+              <Button variant="vpay" asChild>
+                <Link to="/tasks/create">Post the First Task</Link>
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => {
+                setSearchQuery('')
+                setSelectedCategory('All')
+                fetchTasks()
+              }}>
+                Clear Filters
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

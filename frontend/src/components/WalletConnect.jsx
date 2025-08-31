@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { ethers } from 'ethers'
 import { useWallet } from '@/contexts/WalletContext'
 import { Button } from '@/components/ui/button'
@@ -87,10 +88,10 @@ export default function WalletConnect() {
   const handleConnect = async () => {
     try {
       await connectWallet()
-      toast.success('Wallet connected successfully!')
+      // Don't show duplicate success toast since connectWallet already shows one
     } catch (error) {
       console.error('Connection error:', error)
-      toast.error(error.message || 'Failed to connect wallet')
+      // Don't show duplicate error toast since connectWallet already shows one
     }
   }
 
@@ -140,36 +141,68 @@ export default function WalletConnect() {
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center space-x-2">
-            <Wallet className="h-5 w-5 text-purple-600" />
+            <Wallet className="h-6 w-6" />
             <span>Connect Wallet</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-            Connect your MetaMask wallet to access VPay features including payments, 
-            tasks, and rewards.
-          </p>
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto">
+              <Wallet className="h-8 w-8 text-gray-400" />
+            </div>
+            <p className="text-muted-foreground">
+              Connect your wallet to access VPay features
+            </p>
+          </div>
           
-          <Button 
-            onClick={handleConnect}
-            disabled={isConnecting}
-            className="w-full bg-purple-600 hover:bg-purple-700"
-          >
-            {isConnecting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Connecting...
-              </>
-            ) : (
-              <>
-                <Wallet className="h-4 w-4 mr-2" />
-                Connect MetaMask
-              </>
-            )}
-          </Button>
-
-          <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            <p>Make sure MetaMask is unlocked and set to the correct network</p>
+          {typeof window !== 'undefined' && typeof window.ethereum === 'undefined' ? (
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  MetaMask not detected
+                </p>
+              </div>
+              <Button 
+                onClick={() => window.open('https://metamask.io/download/', '_blank')}
+                className="w-full"
+                variant="outline"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Install MetaMask
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              onClick={handleConnect} 
+              disabled={isConnecting}
+              className="w-full"
+              variant="vpay"
+            >
+              {isConnecting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Wallet className="h-4 w-4 mr-2" />
+                  Connect MetaMask
+                </>
+              )}
+            </Button>
+          )}
+          
+          <div className="text-xs text-center text-muted-foreground">
+            <p>New to crypto wallets?</p>
+            <a 
+              href="https://metamask.io/faqs/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-vpay-purple-600 hover:underline"
+            >
+              Learn more about MetaMask
+            </a>
           </div>
         </CardContent>
       </Card>
@@ -262,18 +295,22 @@ export default function WalletConnect() {
           <Button
             variant="outline"
             className="flex items-center justify-center space-x-2"
-            onClick={() => window.location.href = '/wallet'}
+            asChild
           >
-            <Wallet className="h-4 w-4" />
-            <span>View Wallet</span>
+            <Link to="/wallet">
+              <Wallet className="h-4 w-4" />
+              <span>View Wallet</span>
+            </Link>
           </Button>
           <Button
             variant="outline"
             className="flex items-center justify-center space-x-2"
-            onClick={() => window.location.href = '/send'}
+            asChild
           >
-            <ExternalLink className="h-4 w-4" />
-            <span>Send Payment</span>
+            <Link to="/send">
+              <ExternalLink className="h-4 w-4" />
+              <span>Send Payment</span>
+            </Link>
           </Button>
         </div>
 

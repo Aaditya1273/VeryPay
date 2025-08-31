@@ -39,23 +39,38 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const checkConnection = async () => {
     if (typeof window.ethereum !== 'undefined') {
       try {
-        const provider = new ethers.BrowserProvider(window.ethereum)
-        const accounts = await provider.listAccounts()
+        console.log('Checking existing wallet connection...')
+        // Check if already connected
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+        console.log('Existing accounts:', accounts)
         
-        if (accounts.length > 0) {
-          setProvider(provider)
+        if (accounts && accounts.length > 0) {
+          const provider = new ethers.BrowserProvider(window.ethereum)
           const signer = await provider.getSigner()
+          
+          setProvider(provider)
           setSigner(signer)
-          setAccount(accounts[0].address)
+          setAccount(accounts[0])
+          console.log('Auto-connected to:', accounts[0])
+        } else {
+          console.log('No existing wallet connection found')
         }
       } catch (error) {
         console.error('Failed to check wallet connection:', error)
       }
+    } else {
+      console.log('window.ethereum not available')
     }
   }
 
   const setupEventListeners = () => {
     if (typeof window.ethereum !== 'undefined') {
+      // Remove existing listeners to prevent duplicates
+      window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
+      window.ethereum.removeListener('chainChanged', handleChainChanged)
+      window.ethereum.removeListener('disconnect', handleDisconnect)
+      
+      // Add new listeners
       window.ethereum.on('accountsChanged', handleAccountsChanged)
       window.ethereum.on('chainChanged', handleChainChanged)
       window.ethereum.on('disconnect', handleDisconnect)
@@ -79,20 +94,51 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }
 
   const connectWallet = async () => {
+    console.log('connectWallet called')
+    console.log('window.ethereum:', typeof window.ethereum)
+    
     if (typeof window.ethereum === 'undefined') {
+      console.log('MetaMask not detected')
       toast.error('Please install MetaMask to use VPay')
+      window.open('https://metamask.io/download/', '_blank')
       return
     }
 
     try {
       setIsConnecting(true)
+      console.log('Requesting accounts...')
       
-      // Request account access
-      await window.ethereum.request({ method: 'eth_requestAccounts' })
+      // Force MetaMask popup by checking if it's locked first
+      try {
+        // Try to get current accounts first
+        const currentAccounts = await window.ethereum.request({ method: 'eth_accounts' })
+        console.log('Current accounts before request:', currentAccounts)
+      } catch (err) {
+        console.log('Error checking current accounts:', err)
+      }
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), 15000) // 15 seconds
+      })
+      
+      // Request account access with timeout
+      const accounts = await Promise.race([
+        window.ethereum.request({ method: 'eth_requestAccounts' }),
+        timeoutPromise
+      ])
+      
+      console.log('Accounts received:', accounts)
+      
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No accounts returned')
+      }
       
       const provider = new ethers.BrowserProvider(window.ethereum)
       const signer = await provider.getSigner()
       const address = await signer.getAddress()
+      
+      console.log('Connected address:', address)
       
       setProvider(provider)
       setSigner(signer)
@@ -101,10 +147,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       toast.success('Wallet connected successfully!')
     } catch (error: any) {
       console.error('Failed to connect wallet:', error)
+      console.log('Error code:', error.code)
+      console.log('Error message:', error.message)
+      
       if (error.code === 4001) {
-        toast.error('Please connect your wallet to continue')
+        toast.error('Connection rejected. Please approve the connection in MetaMask.')
+      } else if (error.code === -32002) {
+        toast.error('Connection request pending. Please open MetaMask and approve the connection.')
+      } else if (error.message === 'Connection timeout') {
+        toast.error('MetaMask not responding. Please unlock MetaMask and try again.')
       } else {
-        toast.error('Failed to connect wallet')
+        toast.error(error.message || 'Failed to connect wallet')
       }
     } finally {
       setIsConnecting(false)
@@ -144,6 +197,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setBalance(ethers.formatEther(balance))
     } catch (error) {
       console.error('Failed to update balance:', error)
+      setBalance('0')
     }
   }
 

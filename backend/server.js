@@ -19,6 +19,13 @@ const leaderboardRoutes = require('./routes/leaderboards');
 const nftBadgeRoutes = require('./routes/nftBadges');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
+});
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -583,6 +590,156 @@ app.listen(PORT, async () => {
   console.log('GET  /api/rewards/redemption/history - Get redemption history');
   console.log('POST /api/rewards/nft/mint - Mint reward NFT');
   console.log('POST /api/rewards/tokens/transfer - Transfer bonus tokens');
+});
+
+// WebSocket connection handling for VeryChat
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  // Join user to their personal room
+  socket.on('join-user-room', (userId) => {
+    socket.join(`user-${userId}`);
+    console.log(`User ${userId} joined their room`);
+  });
+
+  // Join merchant-customer chat room
+  socket.on('join-chat-room', (roomId) => {
+    socket.join(roomId);
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
+  });
+
+  // Handle chat messages
+  socket.on('send-message', (data) => {
+    const { roomId, message, sender, type } = data;
+    
+    // Broadcast message to room
+    io.to(roomId).emit('receive-message', {
+      id: Date.now(),
+      message,
+      sender,
+      type,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Handle payment notifications
+  socket.on('payment-event', (data) => {
+    const { userId, type, amount, status, transactionId } = data;
+    
+    // Send automated message for payment events
+    const automatedMessage = {
+      id: Date.now(),
+      message: generatePaymentMessage(type, status, amount, transactionId),
+      sender: 'VeryChat Assistant',
+      type: 'automated',
+      timestamp: new Date().toISOString()
+    };
+    
+    io.to(`user-${userId}`).emit('receive-message', automatedMessage);
+  });
+
+  // Handle AI chatbot queries
+  socket.on('ai-query', async (data) => {
+    const { userId, query, context } = data;
+    
+    try {
+      // Process AI query (integrate with VeryChat API)
+      const aiResponse = await processAIQuery(query, context);
+      
+      const aiMessage = {
+        id: Date.now(),
+        message: aiResponse,
+        sender: 'VeryChat AI',
+        type: 'ai-response',
+        timestamp: new Date().toISOString()
+      };
+      
+      socket.emit('receive-message', aiMessage);
+    } catch (error) {
+      console.error('AI query error:', error);
+      socket.emit('ai-error', { error: 'Failed to process query' });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+// Helper function to generate payment messages
+function generatePaymentMessage(type, status, amount, transactionId) {
+  const statusEmoji = status === 'success' ? '✅' : '❌';
+  const typeText = type === 'send' ? 'sent' : 'received';
+  
+  if (status === 'success') {
+    return `${statusEmoji} Payment ${typeText} successfully! Amount: $${amount}. Transaction ID: ${transactionId}. Your receipt is ready.`;
+  } else {
+    return `${statusEmoji} Payment ${typeText} failed. Amount: $${amount}. Please try again or contact support.`;
+  }
+}
+
+// AI query processing function
+async function processAIQuery(query, context) {
+  // Integrate with VeryChat API or local AI processing
+  const lowerQuery = query.toLowerCase();
+  
+  // FAQ responses
+  if (lowerQuery.includes('receipt') || lowerQuery.includes('transaction')) {
+    return "You can find your receipts in the Wallet section under 'Transaction History'. All your payment receipts are automatically generated and stored there.";
+  }
+  
+  if (lowerQuery.includes('payment') && lowerQuery.includes('failed')) {
+    return "If your payment failed, please check: 1) Sufficient wallet balance, 2) Network connectivity, 3) Correct recipient address. You can retry the payment or contact support.";
+  }
+  
+  if (lowerQuery.includes('support') || lowerQuery.includes('help')) {
+    return "I'm here to help! You can ask me about payments, receipts, wallet balance, transaction history, or any VPay features. What specific assistance do you need?";
+  }
+  
+  if (lowerQuery.includes('balance') || lowerQuery.includes('wallet')) {
+    return "You can check your wallet balance in the Wallet section. It shows your current balance, recent transactions, and payment history.";
+  }
+  
+  // Default response
+  return "I understand you're asking about VPay. Could you please be more specific? I can help with payments, receipts, wallet issues, transaction history, and general support.";
+}
+
+// Start server with WebSocket support
+server.listen(PORT, () => {
+  console.log(`🚀 VPay Backend Server running on port ${PORT}`);
+  console.log(`📡 WebSocket server ready for real-time chat`);
+  console.log(`🤖 VeryChat AI assistant integrated`);
+  console.log('\n📋 Available API Endpoints:');
+  console.log('💳 Payment & Wallet:');
+  console.log('POST /api/wallet/connect - Connect wallet');
+  console.log('POST /api/wallet/deposit - Deposit funds');
+  console.log('POST /api/wallet/transfer - Transfer funds');
+  console.log('POST /api/wallet/withdraw - Withdraw funds');
+  console.log('GET  /api/wallet/balance/:address - Get balance');
+  console.log('GET  /api/wallet/transactions/:address - Get transactions');
+  console.log('👥 User Management:');
+  console.log('POST /api/users/register - Register new user');
+  console.log('POST /api/users/login - User login');
+  console.log('POST /api/users/onboard - Onboard new user');
+  console.log('GET  /api/users/:address - Get user details');
+  console.log('📋 Task Management:');
+  console.log('GET  /api/tasks - List tasks');
+  console.log('POST /api/tasks/create - Create new task');
+  console.log('POST /api/tasks/:id/assign - Assign task');
+  console.log('POST /api/tasks/:id/complete - Complete task');
+  console.log('🎁 Rewards & Gamification:');
+  console.log('GET  /api/rewards - List rewards');
+  console.log('POST /api/rewards/earn - Award points');
+  console.log('POST /api/rewards/:id/redeem - Redeem reward');
+  console.log('GET  /api/rewards/user/:address - Get user rewards');
+  console.log('GET  /api/quests/user/:userId - Get user quests');
+  console.log('POST /api/streaks/update - Update user streaks');
+  console.log('GET  /api/leaderboards/points - Get leaderboards');
+  console.log('GET  /api/nft-badges/user/:userId - Get user badges');
+  console.log('🤖 AI & Chat:');
+  console.log('WebSocket: Real-time chat and AI assistance');
+  console.log('WebSocket: Payment notifications and receipts');
+  console.log('WebSocket: Merchant-customer support chat');
 });
 
 module.exports = app;

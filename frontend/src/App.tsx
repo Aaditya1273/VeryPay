@@ -2,6 +2,8 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { ChatProvider } from './contexts/ChatContext'
+import { DIDProvider } from './contexts/DIDContext'
+import { SBTProvider } from './contexts/SBTContext'
 import Layout from './components/layout/Layout'
 // Simple loading component
 const LoadingSpinner = () => (
@@ -50,7 +52,9 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <ChatProvider>
-      <Routes>
+      <DIDProvider>
+        <SBTProvider>
+          <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={

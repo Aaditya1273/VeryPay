@@ -8,6 +8,8 @@ const { txLogger, kycCheck, rateLimiter } = require('./middleware/security');
 const aiRewardsRoutes = require('./routes/aiRewards');
 // Import DID routes
 const didRoutes = require('./routes/did');
+// Import SBT routes
+const sbtRoutes = require('./routes/sbt');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -533,6 +535,9 @@ app.use('/api/rewards', aiRewardsRoutes);
 
 // DID Routes
 app.use('/api/did', didRoutes);
+
+// SBT Routes
+app.use('/api/sbt', sbtRoutes);
 
 // =============================================================================
 // SERVER STARTUP

@@ -39,6 +39,11 @@ model User {
   userActivities   UserActivity[]
   rewardRecommendations RewardRecommendation[]
   userPreferences  UserPreference[]
+  userQuests       UserQuest[]
+  streaks          Streak[]
+  userBadges       UserBadge[]
+  leaderboardEntries LeaderboardEntry[]
+  userLevel        UserLevel?
 
   @@map("users")
 }
@@ -290,4 +295,174 @@ model RewardCampaign {
   updatedAt     DateTime @updatedAt
   
   @@map("reward_campaigns")
+}
+
+// Gamification Models
+
+model Quest {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  type          String   // DAILY, WEEKLY, MONTHLY, SPECIAL, ACHIEVEMENT
+  category      String   // PAYMENT, TASK, SOCIAL, STREAK, MILESTONE
+  difficulty    String   @default("EASY") // EASY, MEDIUM, HARD, LEGENDARY
+  requirements  Json     // Quest completion requirements
+  rewards       Json     // Rewards for completion (points, badges, NFTs)
+  pointsReward  Int      @default(0)
+  xpReward      Int      @default(0)
+  isActive      Boolean  @default(true)
+  isRepeatable  Boolean  @default(false)
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  userQuests    UserQuest[]
+
+  @@map("quests")
+}
+
+model UserQuest {
+  id            String    @id @default(cuid())
+  userId        String
+  questId       String
+  status        String    @default("ACTIVE") // ACTIVE, COMPLETED, FAILED, EXPIRED
+  progress      Json      @default("{}")  // Progress tracking data
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  expiresAt     DateTime?
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quest         Quest     @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questId])
+  @@index([userId, status])
+  @@map("user_quests")
+}
+
+model Streak {
+  id            String   @id @default(cuid())
+  userId        String
+  type          String   // LOGIN, PAYMENT, TASK_COMPLETION, QUEST_COMPLETION
+  currentCount  Int      @default(0)
+  maxCount      Int      @default(0)
+  lastActivity  DateTime @default(now())
+  isActive      Boolean  @default(true)
+  multiplier    Float    @default(1.0) // Bonus multiplier for rewards
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId, isActive])
+  @@map("streaks")
+}
+
+model NFTBadge {
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  image         String   // IPFS hash or URL
+  rarity        String   @default("COMMON") // COMMON, RARE, EPIC, LEGENDARY, MYTHIC
+  category      String   // ACHIEVEMENT, STREAK, QUEST, MILESTONE, SPECIAL
+  metadata      Json     // Dynamic NFT metadata
+  mintCondition Json     // Conditions for minting this badge
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  userBadges    UserBadge[]
+
+  @@map("nft_badges")
+}
+
+model UserBadge {
+  id            String    @id @default(cuid())
+  userId        String
+  badgeId       String
+  tokenId       String?   // NFT token ID when minted
+  contractAddress String? // Smart contract address
+  txHash        String?   // Minting transaction hash
+  metadata      Json      // Dynamic metadata at mint time
+  mintedAt      DateTime  @default(now())
+  isVisible     Boolean   @default(true)
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge         NFTBadge  @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@map("user_badges")
+}
+
+model Leaderboard {
+  id            String   @id @default(cuid())
+  type          String   // GLOBAL, WEEKLY, MONTHLY, QUEST, STREAK
+  category      String   // POINTS, XP, QUESTS_COMPLETED, STREAK_LENGTH, EARNINGS
+  period        String   @default("ALL_TIME") // ALL_TIME, WEEKLY, MONTHLY, DAILY
+  startDate     DateTime?
+  endDate       DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  entries       LeaderboardEntry[]
+
+  @@map("leaderboards")
+}
+
+model LeaderboardEntry {
+  id            String      @id @default(cuid())
+  leaderboardId String
+  userId        String
+  rank          Int
+  score         Float       // Points, XP, or other metric
+  metadata      Json        @default("{}")  // Additional ranking data
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  leaderboard   Leaderboard @relation(fields: [leaderboardId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([leaderboardId, userId])
+  @@index([leaderboardId, rank])
+  @@map("leaderboard_entries")
+}
+
+model UserLevel {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  level         Int      @default(1)
+  xp            Int      @default(0)
+  xpToNext      Int      @default(100)
+  totalXp       Int      @default(0)
+  prestige      Int      @default(0) // Prestige level for advanced users
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_levels")
+}
+
+model QuestTemplate {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  type          String   // DAILY, WEEKLY, MONTHLY
+  category      String
+  difficulty    String
+  requirements  Json     // Template requirements
+  rewards       Json     // Template rewards
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@map("quest_templates")
 }

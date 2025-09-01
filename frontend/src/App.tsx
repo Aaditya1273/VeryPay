@@ -26,6 +26,7 @@ import ProfilePage from './pages/ProfilePage'
 import SendPaymentPage from './pages/payments/SendPaymentPage'
 import ReceivePaymentPage from './pages/payments/ReceivePaymentPage'
 import CreateTaskPage from './pages/tasks/CreateTaskPage'
+import { LoyaltyDashboard } from './components/loyalty/LoyaltyDashboard'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -168,10 +169,20 @@ function App() {
           </Layout>
         </ProtectedRoute>
       } />
+      
+      <Route path="/loyalty" element={
+        <ProtectedRoute>
+          <Layout>
+            <LoyaltyDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+          </Routes>
+        </SBTProvider>
+      </DIDProvider>
     </ChatProvider>
   )
 }

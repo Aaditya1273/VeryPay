@@ -4,6 +4,9 @@ const { ethers } = require('ethers');
 require('dotenv').config();
 const { txLogger, kycCheck, rateLimiter } = require('./middleware/security');
 
+// Import AI Rewards routes
+const aiRewardsRoutes = require('./routes/aiRewards');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -523,6 +526,9 @@ app.get('/api/rewards/user/:address', async (req, res) => {
   }
 });
 
+// AI Rewards Routes
+app.use('/api/rewards', aiRewardsRoutes);
+
 // =============================================================================
 // SERVER STARTUP
 // =============================================================================
@@ -548,6 +554,12 @@ app.listen(PORT, async () => {
   console.log('POST /api/rewards/earn - Award points');
   console.log('POST /api/rewards/:id/redeem - Redeem reward');
   console.log('GET  /api/rewards/user/:address - Get user rewards');
+  console.log('GET  /api/rewards/recommend - Get AI recommendations');
+  console.log('POST /api/rewards/recommend/:id/claim - Claim AI recommendation');
+  console.log('GET  /api/rewards/analytics - Get user analytics');
+  console.log('GET  /api/rewards/redemption/history - Get redemption history');
+  console.log('POST /api/rewards/nft/mint - Mint reward NFT');
+  console.log('POST /api/rewards/tokens/transfer - Transfer bonus tokens');
 });
 
 module.exports = app;

@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { Plus, Search, Clock, DollarSign, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
+// Task interface
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  amount: number;
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  creator: string;
+  worker: string | null;
+  category: string;
+  createdAt: string;
+  escrowId: number;
+}
 
 const TaskMarketplace = () => {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [walletAddress, setWalletAddress] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -55,40 +70,14 @@ const TaskMarketplace = () => {
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      // Mock data for demo
-      setTasks([
-        {
-          id: '1',
-          title: 'Build React Component',
-          description: 'Create a responsive dashboard component with charts',
-          amount: 150,
-          status: 'open',
-          creator: '0x123...abc',
-          worker: null,
-          category: 'development',
-          createdAt: '2024-01-15T10:00:00Z',
-          escrowId: 1
-        },
-        {
-          id: '2',
-          title: 'Design Logo',
-          description: 'Create a modern logo for crypto startup',
-          amount: 75,
-          status: 'in_progress',
-          creator: '0x456...def',
-          worker: '0x789...ghi',
-          category: 'design',
-          createdAt: '2024-01-14T15:00:00Z',
-          escrowId: 2
-        }
-      ]);
+      setTasks([]);
     } finally {
       setLoading(false);
     }
   };
 
   // Create new task
-  const handleCreateTask = async (e) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isConnected) {
       alert('Please connect your wallet first');
@@ -114,19 +103,24 @@ const TaskMarketplace = () => {
         const data = await response.json();
         
         // Create escrow on blockchain
-        if (ESCROW_ADDRESS) {
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
-          const contract = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
-          
-          const amount = ethers.parseEther(newTask.amount);
-          const tx = await contract.createEscrow(
-            ethers.ZeroAddress, // buyer (will be set when assigned)
-            walletAddress, // seller (task creator)
-            amount,
-            newTask.description
-          );
-          await tx.wait();
+        if (ESCROW_ADDRESS && window.ethereum) {
+          try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const contract = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
+            
+            const amount = ethers.parseEther(newTask.amount);
+            const tx = await contract.createEscrow(
+              ethers.ZeroAddress, // buyer (will be set when assigned)
+              walletAddress, // seller (task creator)
+              amount,
+              newTask.description
+            );
+            await tx.wait();
+          } catch (error) {
+            console.error('Failed to create blockchain escrow:', error);
+            toast.error('Task created but blockchain escrow failed');
+          }
         }
 
         // Reset form and refresh tasks
@@ -137,14 +131,15 @@ const TaskMarketplace = () => {
       }
     } catch (error) {
       console.error('Error creating task:', error);
-      alert('Failed to create task: ' + error.message);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      alert('Failed to create task: ' + errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   // Assign task to worker
-  const handleAssignTask = async (taskId) => {
+  const handleAssignTask = async (taskId: string) => {
     try {
       const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/assign`, {
         method: 'POST',
@@ -162,7 +157,7 @@ const TaskMarketplace = () => {
   };
 
   // Complete task
-  const handleCompleteTask = async (taskId) => {
+  const handleCompleteTask = async (taskId: string) => {
     try {
       const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/complete`, {
         method: 'POST',
@@ -179,8 +174,13 @@ const TaskMarketplace = () => {
   };
 
   // Release escrow funds
-  const handleReleaseFunds = async (task) => {
+  const handleReleaseFunds = async (task: Task) => {
     try {
+      if (!window.ethereum) {
+        toast.error('Please install MetaMask to release funds');
+        return;
+      }
+      
       if (ESCROW_ADDRESS && task.escrowId) {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
@@ -190,7 +190,7 @@ const TaskMarketplace = () => {
         await tx.wait();
         
         await fetchTasks();
-        alert('Funds released successfully!');
+        toast.success('Funds released successfully!');
       }
     } catch (error) {
       console.error('Error releasing funds:', error);
@@ -198,9 +198,9 @@ const TaskMarketplace = () => {
   };
 
   // Cancel task
-  const handleCancelTask = async (task) => {
+  const handleCancelTask = async (task: Task) => {
     try {
-      if (ESCROW_ADDRESS && task.escrowId) {
+      if (ESCROW_ADDRESS && task.escrowId && window.ethereum) {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
@@ -209,7 +209,9 @@ const TaskMarketplace = () => {
         await tx.wait();
         
         await fetchTasks();
-        alert('Task cancelled successfully!');
+        toast.success('Task cancelled successfully!');
+      } else if (!window.ethereum) {
+        toast.error('Please install MetaMask to cancel tasks');
       }
     } catch (error) {
       console.error('Error cancelling task:', error);
@@ -224,12 +226,12 @@ const TaskMarketplace = () => {
     return matchesFilter && matchesSearch;
   });
 
-  const formatAddress = (address) => {
+  const formatAddress = (address: string) => {
     if (!address) return '';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'open': return 'bg-green-500/20 text-green-400';
       case 'in_progress': return 'bg-yellow-500/20 text-yellow-400';
@@ -430,7 +432,7 @@ const TaskMarketplace = () => {
                   <textarea
                     value={newTask.description}
                     onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                    rows="4"
+                    rows={4}
                     className="w-full bg-purple-900/30 border border-purple-500/30 rounded-xl px-4 py-3 text-white placeholder-purple-300 focus:outline-none focus:border-purple-400 resize-none"
                     required
                   />

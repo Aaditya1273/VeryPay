@@ -105,36 +105,7 @@ const WalletDashboardPage = () => {
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);
-      // Mock data for demo
-      setTransactions([
-        {
-          id: '1',
-          type: 'send',
-          amount: '50.0',
-          to: '0x742d35Cc6634C0532925a3b8D0f3c4c8c3c5c8c8',
-          timestamp: '2024-01-15T10:30:00Z',
-          status: 'completed',
-          hash: '0x123...abc'
-        },
-        {
-          id: '2',
-          type: 'receive',
-          amount: '25.5',
-          from: '0x123d35Cc6634C0532925a3b8D0f3c4c8c3c5c123',
-          timestamp: '2024-01-14T15:45:00Z',
-          status: 'completed',
-          hash: '0x456...def'
-        },
-        {
-          id: '3',
-          type: 'send',
-          amount: '10.0',
-          to: '0x789d35Cc6634C0532925a3b8D0f3c4c8c3c5c789',
-          timestamp: '2024-01-13T09:15:00Z',
-          status: 'completed',
-          hash: '0x789...ghi'
-        }
-      ]);
+      setTransactions([]);
     }
   };
 

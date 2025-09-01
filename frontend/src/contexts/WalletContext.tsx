@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import toast from 'react-hot-toast'
+import axios from 'axios'
 
 interface WalletContextType {
   provider: ethers.BrowserProvider | null
@@ -40,7 +41,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     if (typeof window.ethereum !== 'undefined') {
       try {
         console.log('Checking existing wallet connection...')
-        // Check if already connected
+        
+        // First check if MetaMask has connected accounts
         const accounts = await window.ethereum.request({ method: 'eth_accounts' })
         console.log('Existing accounts:', accounts)
         
@@ -53,7 +55,15 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           setAccount(accounts[0])
           console.log('Auto-connected to:', accounts[0])
         } else {
-          console.log('No existing wallet connection found')
+          // If no MetaMask connection, try to restore from user profile
+          const savedWalletAddress = await loadWalletFromProfile()
+          if (savedWalletAddress) {
+            console.log('Found saved wallet address in profile:', savedWalletAddress)
+            // Note: We can't auto-connect to MetaMask without user interaction
+            // But we can show the user that they had a wallet connected before
+          } else {
+            console.log('No existing wallet connection found')
+          }
         }
       } catch (error) {
         console.error('Failed to check wallet connection:', error)
@@ -144,6 +154,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setSigner(signer)
       setAccount(address)
       
+      // Save wallet address to user profile
+      await saveWalletToProfile(address)
+      
       toast.success('Wallet connected successfully!')
     } catch (error: any) {
       console.error('Failed to connect wallet:', error)
@@ -186,6 +199,37 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       } else {
         toast.error('Failed to switch network')
       }
+    }
+  }
+
+  const saveWalletToProfile = async (walletAddress: string) => {
+    try {
+      const token = localStorage.getItem('vpay-token')
+      if (!token) return
+
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/wallet`, {
+        walletAddress
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (error) {
+      console.error('Failed to save wallet to profile:', error)
+    }
+  }
+
+  const loadWalletFromProfile = async () => {
+    try {
+      const token = localStorage.getItem('vpay-token')
+      if (!token) return null
+
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      return response.data.user?.walletAddress || null
+    } catch (error) {
+      console.error('Failed to load wallet from profile:', error)
+      return null
     }
   }
 

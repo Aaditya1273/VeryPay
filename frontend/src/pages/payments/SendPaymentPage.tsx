@@ -1,40 +1,88 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWallet } from '@/contexts/WalletContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
-import { ArrowLeft, Send, QrCode, Users, Clock } from 'lucide-react'
+import { ArrowLeft, Send, QrCode, Users, Clock, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import axios from 'axios'
 
-// Mock contacts
-const mockContacts = [
-  { id: '1', name: 'John Doe', username: 'john_doe', avatar: '👨‍💻' },
-  { id: '2', name: 'Coffee Shop', username: 'coffee_shop', avatar: '☕' },
-  { id: '3', name: 'Alice Smith', username: 'alice_smith', avatar: '👩‍🎨' },
-  { id: '4', name: 'Bob Wilson', username: 'bob_wilson', avatar: '👨‍🔧' }
-]
+interface Contact {
+  id: string
+  username: string
+  fullName?: string
+  avatar?: string
+}
 
-// Mock recent recipients
-const mockRecent = [
-  { id: '1', name: 'John Doe', username: 'john_doe', avatar: '👨‍💻', lastAmount: 50 },
-  { id: '2', name: 'Coffee Shop', username: 'coffee_shop', avatar: '☕', lastAmount: 25 }
-]
+interface RecentTransaction {
+  id: string
+  recipientId: string
+  recipientUsername: string
+  recipientName?: string
+  amount: number
+  createdAt: string
+}
 
 export default function SendPaymentPage() {
   const [step, setStep] = useState<'recipient' | 'amount' | 'confirm'>('recipient')
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [message, setMessage] = useState('')
-  const [selectedContact, setSelectedContact] = useState<any>(null)
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([])
+  const [loadingData, setLoadingData] = useState(true)
   
   const navigate = useNavigate()
   const { balance } = useWallet()
 
-  const handleSelectContact = (contact: any) => {
+  useEffect(() => {
+    fetchContactsAndRecent()
+  }, [])
+
+  const fetchContactsAndRecent = async () => {
+    try {
+      setLoadingData(true)
+      const token = localStorage.getItem('vpay-token')
+      if (!token) return
+
+      // Fetch contacts (other users)
+      const contactsResponse = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/users/search/`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 10 }
+      })
+      
+      // Fetch recent transactions
+      const transactionsResponse = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/wallet/transactions`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 5, type: 'sent' }
+      })
+
+      setContacts(contactsResponse.data.users || [])
+      setRecentTransactions(transactionsResponse.data.transactions || [])
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    } finally {
+      setLoadingData(false)
+    }
+  }
+
+  const handleSelectContact = (contact: Contact) => {
     setSelectedContact(contact)
     setRecipient(contact.username)
+    setStep('amount')
+  }
+
+  const handleSelectRecent = (transaction: RecentTransaction) => {
+    const contact: Contact = {
+      id: transaction.recipientId,
+      username: transaction.recipientUsername,
+      fullName: transaction.recipientName
+    }
+    setSelectedContact(contact)
+    setRecipient(transaction.recipientUsername)
     setStep('amount')
   }
 
@@ -54,19 +102,31 @@ export default function SendPaymentPage() {
     setIsLoading(true)
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const token = localStorage.getItem('vpay-token')
+      if (!token) {
+        toast.error('Please log in to send payments')
+        return
+      }
+
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/wallet/send`, {
+        to: recipient,
+        amount: parseFloat(amount),
+        message: message || undefined
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       
       toast.success('Payment sent successfully!')
       navigate('/wallet')
-    } catch (error) {
-      toast.error('Failed to send payment')
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to send payment'
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const availableBalance = parseFloat(balance) + 175 // Mock additional balance
+  const availableBalance = parseFloat(balance) || 0
   const sendAmount = parseFloat(amount) || 0
   const fee = sendAmount * 0.001 // 0.1% fee
   const total = sendAmount + fee
@@ -153,7 +213,22 @@ export default function SendPaymentPage() {
           </Card>
 
           {/* Recent Recipients */}
-          {mockRecent.length > 0 && (
+          {loadingData ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Clock className="h-5 w-5" />
+                  <span>Recent</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Loading recent transactions...</span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : recentTransactions.length > 0 ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -163,29 +238,29 @@ export default function SendPaymentPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {mockRecent.map((contact) => (
+                  {recentTransactions.map((transaction) => (
                     <div
-                      key={contact.id}
-                      onClick={() => handleSelectContact(contact)}
+                      key={transaction.id}
+                      onClick={() => handleSelectRecent(transaction)}
                       className="flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
-                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-lg">
-                        {contact.avatar}
+                      <div className="w-10 h-10 rounded-full bg-vpay-purple-100 dark:bg-vpay-purple-900 flex items-center justify-center text-vpay-purple-600 dark:text-vpay-purple-300 font-semibold">
+                        {transaction.recipientName?.charAt(0) || transaction.recipientUsername.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium">{contact.name}</p>
-                        <p className="text-sm text-muted-foreground">@{contact.username}</p>
+                        <p className="font-medium">{transaction.recipientName || transaction.recipientUsername}</p>
+                        <p className="text-sm text-muted-foreground">@{transaction.recipientUsername}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-muted-foreground">Last sent</p>
-                        <p className="font-medium">{formatCurrency(contact.lastAmount)}</p>
+                        <p className="font-medium">{formatCurrency(transaction.amount)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          )}
+          ) : null}
 
           {/* Contacts */}
           <Card>
@@ -196,23 +271,40 @@ export default function SendPaymentPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {mockContacts.map((contact) => (
-                  <div
-                    key={contact.id}
-                    onClick={() => handleSelectContact(contact)}
-                    className="flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-lg">
-                      {contact.avatar}
+              {loadingData ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Loading contacts...</span>
+                </div>
+              ) : contacts.length > 0 ? (
+                <div className="space-y-2">
+                  {contacts.map((contact) => (
+                    <div
+                      key={contact.id}
+                      onClick={() => handleSelectContact(contact)}
+                      className="flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-vpay-purple-100 dark:bg-vpay-purple-900 flex items-center justify-center text-vpay-purple-600 dark:text-vpay-purple-300 font-semibold">
+                        {contact.avatar ? (
+                          <img src={contact.avatar} alt={contact.fullName || contact.username} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          (contact.fullName?.charAt(0) || contact.username.charAt(0)).toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{contact.fullName || contact.username}</p>
+                        <p className="text-sm text-muted-foreground">@{contact.username}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{contact.name}</p>
-                      <p className="text-sm text-muted-foreground">@{contact.username}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No contacts found</p>
+                  <p className="text-sm">Users you interact with will appear here</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -224,7 +316,7 @@ export default function SendPaymentPage() {
             <CardHeader>
               <CardTitle>Enter Amount</CardTitle>
               <div className="text-sm text-muted-foreground">
-                Sending to: <span className="font-medium">{selectedContact?.name || recipient}</span>
+                Sending to: <span className="font-medium">{selectedContact?.fullName || selectedContact?.username || recipient}</span>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -289,10 +381,14 @@ export default function SendPaymentPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-2xl mx-auto mb-4">
-                  {selectedContact?.avatar || '👤'}
+                <div className="w-16 h-16 rounded-full bg-vpay-purple-100 dark:bg-vpay-purple-900 flex items-center justify-center text-2xl mx-auto mb-4 text-vpay-purple-600 dark:text-vpay-purple-300 font-semibold">
+                  {selectedContact?.avatar ? (
+                    <img src={selectedContact.avatar} alt={selectedContact.fullName || selectedContact.username} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    (selectedContact?.fullName?.charAt(0) || selectedContact?.username?.charAt(0) || recipient.charAt(0)).toUpperCase()
+                  )}
                 </div>
-                <h3 className="text-xl font-semibold">{selectedContact?.name || recipient}</h3>
+                <h3 className="text-xl font-semibold">{selectedContact?.fullName || selectedContact?.username || recipient}</h3>
                 <p className="text-muted-foreground">@{selectedContact?.username || recipient}</p>
               </div>
 

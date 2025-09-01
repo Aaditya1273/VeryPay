@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -36,6 +36,9 @@ model User {
   userAchievements UserAchievement[]
   kycDocuments     KycDocument[]
   transactions     Transaction[]
+  userActivities   UserActivity[]
+  rewardRecommendations RewardRecommendation[]
+  userPreferences  UserPreference[]
 
   @@map("users")
 }
@@ -196,4 +199,95 @@ model KycDocument {
   user           User      @relation(fields: [userId], references: [id])
 
   @@map("kyc_documents")
+}
+
+// AI-Powered Rewards Engine Models
+
+model UserActivity {
+  id            String   @id @default(cuid())
+  userId        String
+  activityType  String   // LOGIN, PAYMENT_SENT, PAYMENT_RECEIVED, TASK_COMPLETED, TASK_CREATED, REWARD_CLAIMED
+  metadata      Json?    // Additional activity data
+  amount        Float?   // Transaction amount if applicable
+  category      String?  // Activity category
+  timestamp     DateTime @default(now())
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, timestamp])
+  @@map("user_activities")
+}
+
+model UserPreference {
+  id            String   @id @default(cuid())
+  userId        String
+  preferenceKey String   // REWARD_TYPE, SPENDING_CATEGORY, NOTIFICATION_FREQUENCY
+  preferenceValue String // JSON string of preference data
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, preferenceKey])
+  @@map("user_preferences")
+}
+
+model RewardRecommendation {
+  id              String   @id @default(cuid())
+  userId          String
+  rewardType      String   // CASHBACK, NFT, BONUS_TOKENS, DISCOUNT, EXCLUSIVE_ACCESS
+  title           String
+  description     String
+  value           Float    // Estimated value
+  confidence      Float    // AI confidence score (0-1)
+  reasoning       String   // AI reasoning for recommendation
+  metadata        Json?    // Additional recommendation data
+  status          String   @default("PENDING") // PENDING, VIEWED, CLAIMED, EXPIRED
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("reward_recommendations")
+}
+
+model SpendingPattern {
+  id            String   @id @default(cuid())
+  userId        String
+  category      String   // PAYMENTS, TASKS, REWARDS, TRANSFERS
+  totalAmount   Float
+  frequency     Int      // Number of transactions
+  avgAmount     Float
+  lastActivity  DateTime
+  trendDirection String  // INCREASING, DECREASING, STABLE
+  periodStart   DateTime
+  periodEnd     DateTime
+  createdAt     DateTime @default(now())
+  
+  @@unique([userId, category, periodStart])
+  @@index([userId])
+  @@map("spending_patterns")
+}
+
+model RewardCampaign {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  rewardType    String   // CASHBACK, NFT, BONUS_TOKENS, DISCOUNT
+  targetCriteria Json    // AI targeting criteria
+  rewardValue   Float
+  budget        Float
+  isActive      Boolean  @default(true)
+  startDate     DateTime
+  endDate       DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("reward_campaigns")
 }

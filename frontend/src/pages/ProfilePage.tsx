@@ -68,14 +68,14 @@ export default function ProfilePage() {
         throw new Error('No authentication token found')
       }
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/profile`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
-      const profileData = response.data
+      const profileData = response.data.user || response.data
       setProfile(profileData)
       setFormData({
-        fullName: profileData.fullName || '',
+        fullName: profileData.fullName || profileData.username || '',
         bio: profileData.bio || '',
         skills: profileData.skills?.join(', ') || ''
       })
@@ -141,7 +141,7 @@ export default function ProfilePage() {
       formData.append('avatar', avatarFile)
       
       const token = localStorage.getItem('vpay-token')
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/profile/avatar`, formData, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/avatar`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -180,7 +180,7 @@ export default function ProfilePage() {
         ...(avatarUrl && { avatar: avatarUrl })
       }
 
-      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/profile`, updateData, {
+      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/profile`, updateData, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -188,12 +188,26 @@ export default function ProfilePage() {
       })
 
       // Update local state with response data
-      if (response.data) {
-        setProfile(response.data)
+      const updatedProfile = response.data.user || response.data
+      if (updatedProfile) {
+        setProfile(updatedProfile)
+        // Sync with AuthContext
+        updateUser({
+          fullName: updatedProfile.fullName,
+          avatar: updatedProfile.avatar,
+          walletAddress: updatedProfile.walletAddress
+        })
       } else if (profile) {
-        setProfile({
+        const newProfile = {
           ...profile,
           ...updateData
+        }
+        setProfile(newProfile)
+        // Sync with AuthContext
+        updateUser({
+          fullName: newProfile.fullName,
+          avatar: newProfile.avatar,
+          walletAddress: newProfile.walletAddress
         })
       }
 
@@ -218,7 +232,7 @@ export default function ProfilePage() {
       // Save to backend
       const token = localStorage.getItem('vpay-token')
       if (token) {
-        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/profile/notifications`, {
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/notifications`, {
           [key]: newValue
         }, {
           headers: { Authorization: `Bearer ${token}` }
@@ -242,7 +256,7 @@ export default function ProfilePage() {
       // Save to backend
       const token = localStorage.getItem('vpay-token')
       if (token) {
-        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/profile/preferences`, {
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/preferences`, {
           [key]: newValue
         }, {
           headers: { Authorization: `Bearer ${token}` }
@@ -265,7 +279,7 @@ export default function ProfilePage() {
       // Save to backend
       const token = localStorage.getItem('vpay-token')
       if (token) {
-        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/profile/preferences`, {
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/preferences`, {
           [key]: value
         }, {
           headers: { Authorization: `Bearer ${token}` }

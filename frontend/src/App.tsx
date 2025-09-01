@@ -1,6 +1,7 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
+import { ChatProvider } from './contexts/ChatContext'
 import Layout from './components/layout/Layout'
 // Simple loading component
 const LoadingSpinner = () => (
@@ -48,7 +49,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Routes>
+    <ChatProvider>
+      <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={
@@ -165,7 +167,8 @@ function App() {
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+      </Routes>
+    </ChatProvider>
   )
 }
 

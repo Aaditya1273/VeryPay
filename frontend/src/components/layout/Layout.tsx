@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useWallet } from '../../contexts/WalletContext'
 import { formatCurrency, formatAddress } from '../../lib/utils'
+import { ChatWindowEnhanced } from '../chat/ChatWindowEnhanced'
+import { ChatToggle } from '../chat/ChatToggle'
 import { 
   Home, 
   Wallet, 
@@ -65,6 +67,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -301,6 +304,16 @@ export default function Layout({ children }: LayoutProps) {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </main>
+
+        {/* VeryChat Integration */}
+        <ChatToggle 
+          isOpen={isChatOpen} 
+          onClick={() => setIsChatOpen(!isChatOpen)}
+        />
+        <ChatWindowEnhanced 
+          isOpen={isChatOpen} 
+          onClose={() => setIsChatOpen(false)}
+        />
 
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext'
 import { ChatProvider } from './contexts/ChatContext'
 import { DIDProvider } from './contexts/DIDContext'
 import { SBTProvider } from './contexts/SBTContext'
+import { RealTimeChatProvider } from './contexts/RealTimeChatContext'
 import Layout from './components/layout/Layout'
 // Simple loading component
 const LoadingSpinner = () => (
@@ -32,6 +33,8 @@ import QuestDashboard from './components/gamification/QuestDashboard'
 import StreakTracker from './components/gamification/StreakTracker'
 import LeaderboardDashboard from './components/gamification/LeaderboardDashboard'
 import NFTBadgeCollection from './components/gamification/NFTBadgeCollection'
+import MerchantCustomerChat from './components/chat/MerchantCustomerChat'
+import AIFAQChatbot from './components/chat/AIFAQChatbot'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {

@@ -6,6 +6,8 @@ const { txLogger, kycCheck, rateLimiter } = require('./middleware/security');
 
 // Import AI Rewards routes
 const aiRewardsRoutes = require('./routes/aiRewards');
+// Import DID routes
+const didRoutes = require('./routes/did');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -528,6 +530,9 @@ app.get('/api/rewards/user/:address', async (req, res) => {
 
 // AI Rewards Routes
 app.use('/api/rewards', aiRewardsRoutes);
+
+// DID Routes
+app.use('/api/did', didRoutes);
 
 // =============================================================================
 // SERVER STARTUP

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useMultiChainWallet } from '../../contexts/MultiChainWalletContext';
+import { useAccountAbstraction } from '../../contexts/AccountAbstractionContext';
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther, formatEther, parseUnits, formatUnits } from 'viem';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import GaslessPaymentToggle from './GaslessPaymentToggle';
 
 interface PaymentRequest {
   merchantAddress: string;
@@ -35,6 +37,12 @@ const MultiChainPaymentProcessor: React.FC<{ paymentRequest: PaymentRequest }> =
     switchToChain, 
     isChainSupported 
   } = useMultiChainWallet();
+
+  const {
+    isGaslessEnabled,
+    sendUserOperation,
+    isAccountAbstractionSupported
+  } = useAccountAbstraction();
 
   const [selectedToken, setSelectedToken] = useState<TokenOption | null>(null);
   const [tokenOptions, setTokenOptions] = useState<TokenOption[]>([]);
@@ -154,56 +162,76 @@ const MultiChainPaymentProcessor: React.FC<{ paymentRequest: PaymentRequest }> =
       const rate = exchangeRates[selectedToken.symbol] || 1;
       const tokenAmount = paymentRequest.amount / rate;
 
-      if (selectedToken.address === '0x0') {
-        // Native token payment
-        const amountWei = parseEther(tokenAmount.toString());
+      if (isGaslessEnabled && isAccountAbstractionSupported) {
+        // Use account abstraction for gasless payment
+        const callData = selectedToken.address === '0x0' 
+          ? '0x' // Native token transfer data
+          : '0xa9059cbb'; // ERC20 transfer function selector
         
-        await writeContract({
-          address: '0x1234567890123456789012345678901234567890', // Mock contract address
-          abi: [
-            {
-              name: 'createNativePayment',
-              type: 'function',
-              inputs: [
-                { name: 'merchant', type: 'address' },
-                { name: 'orderId', type: 'string' }
-              ],
-              outputs: [],
-              stateMutability: 'payable'
-            }
-          ],
-          functionName: 'createNativePayment',
-          args: [paymentRequest.merchantAddress, paymentRequest.orderId],
-          value: amountWei
-        });
+        const value = selectedToken.address === '0x0' 
+          ? BigInt(Math.floor(tokenAmount * 1e18))
+          : 0n;
+
+        const txHash = await sendUserOperation(
+          paymentRequest.merchantAddress as `0x${string}`,
+          callData as `0x${string}`,
+          value
+        );
+
+        setTxHash(txHash);
       } else {
-        // ERC20 token payment
-        const amountUnits = parseUnits(tokenAmount.toString(), selectedToken.decimals);
-        
-        await writeContract({
-          address: '0x1234567890123456789012345678901234567890', // Mock contract address
-          abi: [
-            {
-              name: 'createTokenPayment',
-              type: 'function',
-              inputs: [
-                { name: 'merchant', type: 'address' },
-                { name: 'token', type: 'address' },
-                { name: 'amount', type: 'uint256' },
-                { name: 'orderId', type: 'string' }
-              ],
-              outputs: [],
-              stateMutability: 'nonpayable'
-            }
-          ],
-          functionName: 'createTokenPayment',
-          args: [
-            paymentRequest.merchantAddress,
-            selectedToken.address,
-            amountUnits,
-            paymentRequest.orderId
-          ]
-        });
+        // Regular payment flow
+        if (selectedToken.address === '0x0') {
+          // Native token payment
+          const amountWei = parseEther(tokenAmount.toString());
+          
+          await writeContract({
+            address: '0x1234567890123456789012345678901234567890', // Mock contract address
+            abi: [
+              {
+                name: 'createNativePayment',
+                type: 'function',
+                inputs: [
+                  { name: 'merchant', type: 'address' },
+                  { name: 'orderId', type: 'string' }
+                ],
+                outputs: [],
+                stateMutability: 'payable'
+              }
+            ],
+            functionName: 'createNativePayment',
+            args: [paymentRequest.merchantAddress, paymentRequest.orderId],
+            value: amountWei
+          });
+        } else {
+          // ERC20 token payment
+          const amountUnits = parseUnits(tokenAmount.toString(), selectedToken.decimals);
+          
+          await writeContract({
+            address: '0x1234567890123456789012345678901234567890', // Mock contract address
+            abi: [
+              {
+                name: 'createTokenPayment',
+                type: 'function',
+                inputs: [
+                  { name: 'merchant', type: 'address' },
+                  { name: 'token', type: 'address' },
+                  { name: 'amount', type: 'uint256' },
+                  { name: 'orderId', type: 'string' }
+                ],
+                outputs: [],
+                stateMutability: 'nonpayable'
+              }
+            ],
+            functionName: 'createTokenPayment',
+            args: [
+              paymentRequest.merchantAddress,
+              selectedToken.address,
+              amountUnits,
+              paymentRequest.orderId
+            ]
+          });
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed');
@@ -294,6 +322,18 @@ const MultiChainPaymentProcessor: React.FC<{ paymentRequest: PaymentRequest }> =
           </div>
         </CardContent>
       </Card>
+
+      {/* Gasless Payment Toggle */}
+      {step === 'select' && selectedToken && (
+        <GaslessPaymentToggle
+          merchantAddress={paymentRequest.merchantAddress}
+          paymentAmount={paymentRequest.amount}
+          selectedToken={selectedToken.symbol}
+          onGaslessToggle={(enabled, savings) => {
+            console.log('Gasless payment toggled:', enabled, 'Savings:', savings);
+          }}
+        />
+      )}
 
       {/* Token Selection */}
       {step === 'select' && (

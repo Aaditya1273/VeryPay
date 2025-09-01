@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { ethers } = require('ethers');
+const http = require('http');
+const socketIo = require('socket.io');
 require('dotenv').config();
 const { txLogger, kycCheck, rateLimiter } = require('./middleware/security');
 
@@ -10,6 +12,11 @@ const aiRewardsRoutes = require('./routes/aiRewards');
 const didRoutes = require('./routes/did');
 // Import SBT routes
 const sbtRoutes = require('./routes/sbt');
+// Import Gamification routes
+const questRoutes = require('./routes/quests');
+const streakRoutes = require('./routes/streaks');
+const leaderboardRoutes = require('./routes/leaderboards');
+const nftBadgeRoutes = require('./routes/nftBadges');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -538,6 +545,12 @@ app.use('/api/did', didRoutes);
 
 // SBT Routes
 app.use('/api/sbt', sbtRoutes);
+
+// Gamification Routes
+app.use('/api/quests', questRoutes);
+app.use('/api/streaks', streakRoutes);
+app.use('/api/leaderboards', leaderboardRoutes);
+app.use('/api/nft-badges', nftBadgeRoutes);
 
 // =============================================================================
 // SERVER STARTUP

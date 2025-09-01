@@ -27,6 +27,11 @@ import SendPaymentPage from './pages/payments/SendPaymentPage'
 import ReceivePaymentPage from './pages/payments/ReceivePaymentPage'
 import CreateTaskPage from './pages/tasks/CreateTaskPage'
 import { LoyaltyDashboard } from './components/loyalty/LoyaltyDashboard'
+import GamifiedLoyaltyDashboard from './components/gamification/GamifiedLoyaltyDashboard'
+import QuestDashboard from './components/gamification/QuestDashboard'
+import StreakTracker from './components/gamification/StreakTracker'
+import LeaderboardDashboard from './components/gamification/LeaderboardDashboard'
+import NFTBadgeCollection from './components/gamification/NFTBadgeCollection'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -174,6 +179,46 @@ function App() {
         <ProtectedRoute>
           <Layout>
             <LoyaltyDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/gamification" element={
+        <ProtectedRoute>
+          <Layout>
+            <GamifiedLoyaltyDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/quests" element={
+        <ProtectedRoute>
+          <Layout>
+            <QuestDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/streaks" element={
+        <ProtectedRoute>
+          <Layout>
+            <StreakTracker />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/leaderboards" element={
+        <ProtectedRoute>
+          <Layout>
+            <LeaderboardDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/badges" element={
+        <ProtectedRoute>
+          <Layout>
+            <NFTBadgeCollection />
           </Layout>
         </ProtectedRoute>
       } />

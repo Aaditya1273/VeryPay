@@ -16,7 +16,13 @@ import {
   Menu, 
   X,
   LogOut,
-  Bell
+  Bell,
+  Trophy,
+  Target,
+  Flame,
+  Crown,
+  Award,
+  ChevronDown
 } from 'lucide-react'
 
 // Simple Button component
@@ -108,6 +114,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Wallet', href: '/wallet', icon: Wallet },
     { name: 'Tasks', href: '/tasks', icon: Briefcase },
     { name: 'Rewards', href: '/rewards', icon: Gift },
+    { name: 'Gamification', href: '/gamification', icon: Trophy },
     { name: 'Profile', href: '/profile', icon: User },
   ]
 
@@ -139,6 +146,61 @@ export default function Layout({ children }: LayoutProps) {
               <div className="hidden md:flex items-center space-x-8">
                 {navigationItems.map((item) => {
                   const Icon = item.icon
+                  
+                  // Special handling for Gamification dropdown
+                  if (item.name === 'Gamification') {
+                    return (
+                      <div key={item.name} className="relative group">
+                        <Link
+                          to={item.href}
+                          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                            isActiveRoute(item.href)
+                              ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
+                              : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{item.name}</span>
+                          <ChevronDown className="h-3 w-3" />
+                        </Link>
+                        
+                        {/* Gamification Dropdown */}
+                        <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                          <div className="py-1">
+                            <Link
+                              to="/quests"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                              <Target className="h-4 w-4 mr-2" />
+                              Quests
+                            </Link>
+                            <Link
+                              to="/streaks"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                              <Flame className="h-4 w-4 mr-2" />
+                              Streaks
+                            </Link>
+                            <Link
+                              to="/leaderboards"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                              <Crown className="h-4 w-4 mr-2" />
+                              Leaderboards
+                            </Link>
+                            <Link
+                              to="/badges"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                              <Award className="h-4 w-4 mr-2" />
+                              NFT Badges
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+                  
                   return (
                     <Link
                       key={item.name}

@@ -5,6 +5,8 @@ import { useWallet } from '../../contexts/WalletContext'
 import { formatCurrency, formatAddress } from '../../lib/utils'
 import { ChatWindowEnhanced } from '../chat/ChatWindowEnhanced'
 import { ChatToggle } from '../chat/ChatToggle'
+import PaymentChatNotifications from '../chat/PaymentChatNotifications'
+import RealTimeChatWindow from '../chat/RealTimeChatWindow'
 import { 
   Home, 
   Wallet, 
@@ -16,13 +18,17 @@ import {
   Menu, 
   X,
   LogOut,
-  Bell,
   Trophy,
   Target,
   Flame,
   Crown,
   Award,
-  ChevronDown
+  HelpCircle,
+  Users,
+  ChevronDown,
+  CreditCard,
+  DollarSign,
+  Shield
 } from 'lucide-react'
 
 // Simple Button component
@@ -115,6 +121,9 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Tasks', href: '/tasks', icon: Briefcase },
     { name: 'Rewards', href: '/rewards', icon: Gift },
     { name: 'Gamification', href: '/gamification', icon: Trophy },
+    { name: 'On-ramp', href: '/onramp-settlements', icon: CreditCard },
+    { name: 'Settlements', href: '/merchant-settlements', icon: DollarSign },
+    { name: 'Compliance', href: '/compliance', icon: Shield },
     { name: 'Profile', href: '/profile', icon: User },
   ]
 
@@ -230,25 +239,34 @@ export default function Layout({ children }: LayoutProps) {
                   </div>
                 )}
 
-                {/* Notifications */}
+                {/* Payment Chat Notifications */}
+                <PaymentChatNotifications />
+
+                {/* Support Chat */}
                 <div className="relative group">
-                  <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                    {/* Only show notification badge when there are actual notifications */}
-                  </Button>
+                  <Link to="/support">
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Users className="h-5 w-5" />
+                    </Button>
+                  </Link>
                   
-                  {/* Notification Dropdown */}
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="p-4">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Notifications</h3>
-                      <div className="text-center py-8">
-                        <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                          You'll see updates about payments, tasks, and rewards here
-                        </p>
-                      </div>
-                    </div>
+                  {/* Tooltip */}
+                  <div className="absolute right-0 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 whitespace-nowrap">
+                    Customer Support
+                  </div>
+                </div>
+
+                {/* Help & FAQ */}
+                <div className="relative group">
+                  <Link to="/help">
+                    <Button variant="ghost" size="icon" className="relative">
+                      <HelpCircle className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  
+                  {/* Tooltip */}
+                  <div className="absolute right-0 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 whitespace-nowrap">
+                    Help & FAQ
                   </div>
                 </div>
 
@@ -376,6 +394,9 @@ export default function Layout({ children }: LayoutProps) {
           isOpen={isChatOpen} 
           onClose={() => setIsChatOpen(false)}
         />
+        
+        {/* Real-time Chat Window (floating) */}
+        <RealTimeChatWindow isOpen={false} onClose={() => {}} />
 
       </div>
     </div>

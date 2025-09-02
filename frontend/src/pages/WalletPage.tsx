@@ -4,9 +4,10 @@ import { useWallet } from '@/contexts/WalletContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency, formatAddress, formatRelativeTime } from '@/lib/utils'
-import { Send, Download, QrCode, Eye, EyeOff, Copy, ExternalLink, Loader2 } from 'lucide-react'
+import { Send, Download, QrCode, Eye, EyeOff, Copy, ExternalLink, Loader2, CreditCard } from 'lucide-react'
 import { walletAPI } from '@/services/api'
 import toast from 'react-hot-toast'
+import OnrampWidget from '@/components/onramp/OnrampWidget'
 
 interface Transaction {
   id: string
@@ -25,6 +26,7 @@ export default function WalletPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showOnramp, setShowOnramp] = useState(false)
   const { balance, account, isConnected, connectWallet } = useWallet()
 
   useEffect(() => {
@@ -177,19 +179,13 @@ export default function WalletPage() {
 
         <Card 
           className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => {
-            if (account) {
-              window.open(`https://etherscan.io/address/${account}`, '_blank')
-            } else {
-              toast.error('Please connect your wallet first')
-            }
-          }}
+          onClick={() => setShowOnramp(true)}
         >
           <CardContent className="flex flex-col items-center space-y-2 p-6">
             <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center">
-              <ExternalLink className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              <CreditCard className="h-6 w-6 text-orange-600 dark:text-orange-400" />
             </div>
-            <span className="font-medium">Explorer</span>
+            <span className="font-medium">Buy Crypto</span>
           </CardContent>
         </Card>
       </div>
@@ -279,6 +275,38 @@ export default function WalletPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* On-ramp Widget Modal */}
+      {showOnramp && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Buy Crypto
+                </h3>
+                <button
+                  onClick={() => setShowOnramp(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-4">
+              <OnrampWidget
+                isOpen={showOnramp}
+                onClose={() => setShowOnramp(false)}
+                onSuccess={() => {
+                  setShowOnramp(false)
+                  fetchTransactions()
+                  toast.success('Crypto purchase initiated successfully!')
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

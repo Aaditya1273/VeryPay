@@ -35,6 +35,9 @@ import LeaderboardDashboard from './components/gamification/LeaderboardDashboard
 import NFTBadgeCollection from './components/gamification/NFTBadgeCollection'
 import MerchantCustomerChat from './components/chat/MerchantCustomerChat'
 import AIFAQChatbot from './components/chat/AIFAQChatbot'
+import OnrampSettlementDashboard from './components/dashboard/OnrampSettlementDashboard'
+import MerchantSettlementDashboard from './components/settlements/MerchantSettlementDashboard'
+import ComplianceDashboard from './components/compliance/ComplianceDashboard'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -63,7 +66,8 @@ function App() {
     <ChatProvider>
       <DIDProvider>
         <SBTProvider>
-          <Routes>
+          <RealTimeChatProvider>
+            <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={
@@ -225,10 +229,51 @@ function App() {
           </Layout>
         </ProtectedRoute>
       } />
+      
+      <Route path="/support" element={
+        <ProtectedRoute>
+          <Layout>
+            <MerchantCustomerChat />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/help" element={
+        <ProtectedRoute>
+          <Layout>
+            <AIFAQChatbot />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/onramp-settlements" element={
+        <ProtectedRoute>
+          <Layout>
+            <OnrampSettlementDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/merchant-settlements" element={
+        <ProtectedRoute>
+          <Layout>
+            <MerchantSettlementDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/compliance" element={
+        <ProtectedRoute>
+          <Layout>
+            <ComplianceDashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+            </Routes>
+          </RealTimeChatProvider>
         </SBTProvider>
       </DIDProvider>
     </ChatProvider>

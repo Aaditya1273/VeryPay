@@ -12,9 +12,6 @@ import {
   Crown, 
   TrendingUp, 
   Gift,
-  Zap,
-  Calendar,
-  Users,
   Award,
   Gem
 } from 'lucide-react';

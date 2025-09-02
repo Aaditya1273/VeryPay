@@ -2,10 +2,11 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { ChatProvider } from './contexts/ChatContext'
-import { DIDProvider } from './contexts/DIDContext'
-import { SBTProvider } from './contexts/SBTContext'
+// import { DIDProvider } from './contexts/DIDContext';
+// import { SBTProvider } from './contexts/SBTContext'
 import { RealTimeChatProvider } from './contexts/RealTimeChatContext'
 import Layout from './components/layout/Layout'
+
 // Simple loading component
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -28,11 +29,12 @@ import SendPaymentPage from './pages/payments/SendPaymentPage'
 import ReceivePaymentPage from './pages/payments/ReceivePaymentPage'
 import CreateTaskPage from './pages/tasks/CreateTaskPage'
 import { LoyaltyDashboard } from './components/loyalty/LoyaltyDashboard'
-import GamifiedLoyaltyDashboard from './components/gamification/GamifiedLoyaltyDashboard'
-import QuestDashboard from './components/gamification/QuestDashboard'
-import StreakTracker from './components/gamification/StreakTracker'
-import LeaderboardDashboard from './components/gamification/LeaderboardDashboard'
-import NFTBadgeCollection from './components/gamification/NFTBadgeCollection'
+// Gamification components temporarily disabled due to missing dependencies
+// import GamifiedLoyaltyDashboard from './components/gamification/GamifiedLoyaltyDashboard'
+// import QuestDashboard from './components/gamification/QuestDashboard'
+// import StreakTracker from './components/gamification/StreakTracker'
+// import LeaderboardDashboard from './components/gamification/LeaderboardDashboard'
+// import NFTBadgeCollection from './components/gamification/NFTBadgeCollection'
 import MerchantCustomerChat from './components/chat/MerchantCustomerChat'
 import AIFAQChatbot from './components/chat/AIFAQChatbot'
 import OnrampSettlementDashboard from './components/dashboard/OnrampSettlementDashboard'
@@ -64,8 +66,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <ChatProvider>
-      <DIDProvider>
-        <SBTProvider>
+      {/* <DIDProvider> */}
+        {/* <SBTProvider> */}
           <RealTimeChatProvider>
             <Routes>
       {/* Public Routes */}
@@ -190,6 +192,7 @@ function App() {
         </ProtectedRoute>
       } />
       
+      {/* Gamification routes temporarily disabled due to missing dependencies
       <Route path="/gamification" element={
         <ProtectedRoute>
           <Layout>
@@ -229,6 +232,7 @@ function App() {
           </Layout>
         </ProtectedRoute>
       } />
+      */}
       
       <Route path="/support" element={
         <ProtectedRoute>
@@ -274,8 +278,8 @@ function App() {
       <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </RealTimeChatProvider>
-        </SBTProvider>
-      </DIDProvider>
+        {/* </SBTProvider> */}
+      {/* </DIDProvider> */}
     </ChatProvider>
   )
 }

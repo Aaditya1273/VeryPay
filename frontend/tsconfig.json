@@ -27,7 +27,7 @@
 
     /* Type exclusions */
     "skipLibCheck": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "vitest"]
   },
   "include": ["src", "src/types/**/*"],
   "exclude": ["node_modules"],

@@ -18,7 +18,7 @@ import {
   Menu, 
   X,
   LogOut,
-  Trophy,
+  // Trophy, // Temporarily removed with gamification
   Target,
   Flame,
   Crown,
@@ -120,7 +120,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Wallet', href: '/wallet', icon: Wallet },
     { name: 'Tasks', href: '/tasks', icon: Briefcase },
     { name: 'Rewards', href: '/rewards', icon: Gift },
-    { name: 'Gamification', href: '/gamification', icon: Trophy },
+    // { name: 'Gamification', href: '/gamification', icon: Trophy }, // Temporarily disabled
     { name: 'On-ramp', href: '/onramp-settlements', icon: CreditCard },
     { name: 'Settlements', href: '/merchant-settlements', icon: DollarSign },
     { name: 'Compliance', href: '/compliance', icon: Shield },

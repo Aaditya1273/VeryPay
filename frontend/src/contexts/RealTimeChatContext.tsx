@@ -58,7 +58,7 @@ export const RealTimeChatProvider: React.FC<RealTimeChatProviderProps> = ({ chil
   // Initialize WebSocket connection
   useEffect(() => {
     if (user) {
-      const newSocket = io(process.env.VITE_BACKEND_URL || 'http://localhost:3001', {
+      const newSocket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001', {
         transports: ['websocket'],
         upgrade: true
       });

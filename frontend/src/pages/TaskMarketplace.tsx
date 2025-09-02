@@ -35,7 +35,7 @@ const TaskMarketplace = () => {
   });
 
   // Contract configuration
-  const ESCROW_ADDRESS = process.env.REACT_APP_VPAY_ESCROW_ADDRESS || '';
+  const ESCROW_ADDRESS = import.meta.env.REACT_APP_VPAY_ESCROW_ADDRESS || '';
   const ESCROW_ABI = [
     "function createEscrow(address buyer, address seller, uint256 amount, string memory description) external returns (uint256)",
     "function completeEscrow(uint256 escrowId) external",

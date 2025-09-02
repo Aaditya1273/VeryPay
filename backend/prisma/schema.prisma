@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -159,8 +159,8 @@ model OnrampTransaction {
   externalId      String?   // Our reference ID for the provider
   rampPurchaseId  String?   // Ramp's purchase ID
   rampUrl         String?   // Ramp widget URL
-  rampData        Json?     // Full Ramp response data
-  metadata        Json?     // Additional transaction metadata
+  rampData        String?   // Full Ramp response data (JSON string)
+  metadata        String?   // Additional transaction metadata (JSON string)
   completedAt     DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -181,7 +181,7 @@ model MerchantSettlement {
   currency        String    // USD, EUR, USDC, USDT
   amount          Float     // Settlement amount
   status          String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
-  bankAccount     Json?     // Bank account details for fiat settlements
+  bankAccount     String?   // Bank account details for fiat settlements (JSON string)
   walletAddress   String?   // Wallet address for crypto settlements
   provider        String?   // Settlement provider (bank, exchange)
   externalId      String?   // External settlement reference
@@ -266,7 +266,7 @@ model UserActivity {
   id            String   @id @default(cuid())
   userId        String
   activityType  String   // LOGIN, PAYMENT_SENT, PAYMENT_RECEIVED, TASK_COMPLETED, TASK_CREATED, REWARD_CLAIMED
-  metadata      Json?    // Additional activity data
+  metadata      String?  // Additional activity data (JSON string)
   amount        Float?   // Transaction amount if applicable
   category      String?  // Activity category
   timestamp     DateTime @default(now())
@@ -302,7 +302,7 @@ model RewardRecommendation {
   value           Float    // Estimated value
   confidence      Float    // AI confidence score (0-1)
   reasoning       String   // AI reasoning for recommendation
-  metadata        Json?    // Additional recommendation data
+  metadata        String?  // Additional recommendation data (JSON string)
   status          String   @default("PENDING") // PENDING, VIEWED, CLAIMED, EXPIRED
   expiresAt       DateTime?
   createdAt       DateTime @default(now())
@@ -339,7 +339,7 @@ model RewardCampaign {
   title         String
   description   String
   rewardType    String   // CASHBACK, NFT, BONUS_TOKENS, DISCOUNT
-  targetCriteria Json    // AI targeting criteria
+  targetCriteria String  // AI targeting criteria (JSON string)
   rewardValue   Float
   budget        Float
   isActive      Boolean  @default(true)
@@ -360,8 +360,8 @@ model Quest {
   type          String   // DAILY, WEEKLY, MONTHLY, SPECIAL, ACHIEVEMENT
   category      String   // PAYMENT, TASK, SOCIAL, STREAK, MILESTONE
   difficulty    String   @default("EASY") // EASY, MEDIUM, HARD, LEGENDARY
-  requirements  Json     // Quest completion requirements
-  rewards       Json     // Rewards for completion (points, badges, NFTs)
+  requirements  String   // Quest completion requirements (JSON string)
+  rewards       String   // Rewards for completion (JSON string)
   pointsReward  Int      @default(0)
   xpReward      Int      @default(0)
   isActive      Boolean  @default(true)
@@ -382,7 +382,7 @@ model UserQuest {
   userId        String
   questId       String
   status        String    @default("ACTIVE") // ACTIVE, COMPLETED, FAILED, EXPIRED
-  progress      Json      @default("{}")  // Progress tracking data
+  progress      String    @default("{}")  // Progress tracking data (JSON string)
   startedAt     DateTime  @default(now())
   completedAt   DateTime?
   expiresAt     DateTime?
@@ -423,8 +423,8 @@ model NFTBadge {
   image         String   // IPFS hash or URL
   rarity        String   @default("COMMON") // COMMON, RARE, EPIC, LEGENDARY, MYTHIC
   category      String   // ACHIEVEMENT, STREAK, QUEST, MILESTONE, SPECIAL
-  metadata      Json     // Dynamic NFT metadata
-  mintCondition Json     // Conditions for minting this badge
+  metadata      String   // Dynamic NFT metadata (JSON string)
+  mintCondition String   // Conditions for minting this badge (JSON string)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -442,7 +442,7 @@ model UserBadge {
   tokenId       String?   // NFT token ID when minted
   contractAddress String? // Smart contract address
   txHash        String?   // Minting transaction hash
-  metadata      Json      // Dynamic metadata at mint time
+  metadata      String    // Dynamic metadata at mint time (JSON string)
   mintedAt      DateTime  @default(now())
   isVisible     Boolean   @default(true)
 
@@ -478,7 +478,7 @@ model LeaderboardEntry {
   userId        String
   rank          Int
   score         Float       // Points, XP, or other metric
-  metadata      Json        @default("{}")  // Additional ranking data
+  metadata      String      @default("{}")  // Additional ranking data (JSON string)
   updatedAt     DateTime    @updatedAt
 
   // Relations
@@ -513,8 +513,8 @@ model QuestTemplate {
   type          String   // DAILY, WEEKLY, MONTHLY
   category      String
   difficulty    String
-  requirements  Json     // Template requirements
-  rewards       Json     // Template rewards
+  requirements  String   // Template requirements (JSON string)
+  rewards       String   // Template rewards (JSON string)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
 

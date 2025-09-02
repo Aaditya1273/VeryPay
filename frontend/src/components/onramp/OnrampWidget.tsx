@@ -117,7 +117,7 @@ export default function OnrampWidget({
         fiatValue: fiatAmount,
         userAddress,
         returnUrl: `${window.location.origin}/dashboard?onramp=success`,
-        webhookUrl: `${process.env.VITE_API_URL}/onramp/webhook`
+        webhookUrl: `${import.meta.env.VITE_API_URL}/onramp/webhook`
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })

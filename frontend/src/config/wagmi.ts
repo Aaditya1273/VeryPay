@@ -58,13 +58,13 @@ export const config = createConfig({
       appLogoUrl: 'https://vpay.app/logo.png',
     }),
     walletConnect({
-      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'your-project-id',
+      projectId: import.meta.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'your-project-id',
     }),
   ],
   transports: {
-    [mainnet.id]: http(process.env.NEXT_PUBLIC_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'),
-    [polygon.id]: http(process.env.NEXT_PUBLIC_POLYGON_RPC_URL || 'https://polygon.llamarpc.com'),
-    [bsc.id]: http(process.env.NEXT_PUBLIC_BSC_RPC_URL || 'https://bsc.llamarpc.com'),
+    [mainnet.id]: http(import.meta.env.NEXT_PUBLIC_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'),
+    [polygon.id]: http(import.meta.env.NEXT_PUBLIC_POLYGON_RPC_URL || 'https://polygon.llamarpc.com'),
+    [bsc.id]: http(import.meta.env.NEXT_PUBLIC_BSC_RPC_URL || 'https://bsc.llamarpc.com'),
   },
 })
 
@@ -87,19 +87,19 @@ export const defaultChain = polygon
 // Contract addresses for each chain
 export const contractAddresses = {
   [mainnet.id]: {
-    VPayPayments: process.env.NEXT_PUBLIC_ETHEREUM_VPAY_PAYMENTS || '',
-    VPayEscrow: process.env.NEXT_PUBLIC_ETHEREUM_VPAY_ESCROW || '',
-    VPayRewards: process.env.NEXT_PUBLIC_ETHEREUM_VPAY_REWARDS || '',
+    VPayPayments: import.meta.env.NEXT_PUBLIC_ETHEREUM_VPAY_PAYMENTS || '',
+    VPayEscrow: import.meta.env.NEXT_PUBLIC_ETHEREUM_VPAY_ESCROW || '',
+    VPayRewards: import.meta.env.NEXT_PUBLIC_ETHEREUM_VPAY_REWARDS || '',
   },
   [polygon.id]: {
-    VPayPayments: process.env.NEXT_PUBLIC_POLYGON_VPAY_PAYMENTS || '',
-    VPayEscrow: process.env.NEXT_PUBLIC_POLYGON_VPAY_ESCROW || '',
-    VPayRewards: process.env.NEXT_PUBLIC_POLYGON_VPAY_REWARDS || '',
+    VPayPayments: import.meta.env.NEXT_PUBLIC_POLYGON_VPAY_PAYMENTS || '',
+    VPayEscrow: import.meta.env.NEXT_PUBLIC_POLYGON_VPAY_ESCROW || '',
+    VPayRewards: import.meta.env.NEXT_PUBLIC_POLYGON_VPAY_REWARDS || '',
   },
   [bsc.id]: {
-    VPayPayments: process.env.NEXT_PUBLIC_BSC_VPAY_PAYMENTS || '',
-    VPayEscrow: process.env.NEXT_PUBLIC_BSC_VPAY_ESCROW || '',
-    VPayRewards: process.env.NEXT_PUBLIC_BSC_VPAY_REWARDS || '',
+    VPayPayments: import.meta.env.NEXT_PUBLIC_BSC_VPAY_PAYMENTS || '',
+    VPayEscrow: import.meta.env.NEXT_PUBLIC_BSC_VPAY_ESCROW || '',
+    VPayRewards: import.meta.env.NEXT_PUBLIC_BSC_VPAY_REWARDS || '',
   },
 } as const
 

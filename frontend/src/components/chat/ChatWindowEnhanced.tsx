@@ -86,43 +86,28 @@ export const ChatWindowEnhanced: React.FC<ChatWindowProps> = ({ isOpen, onClose 
             setIsLoading(false);
           },
           onError: (error: string) => {
-            console.error('Streaming error:', error);
-            // Fallback to non-streaming
-            handleFallbackResponse(userMessage.content, assistantMessageId);
+            console.error('VeryChat streaming error:', error);
+            setMessages(prev => prev.map(msg => 
+              msg.id === assistantMessageId 
+                ? { ...msg, content: `Error: ${error}`, isStreaming: false }
+                : msg
+            ));
+            setIsLoading(false);
           }
         }
       );
     } catch (error) {
-      console.error('Error with VeryChat:', error);
-      handleFallbackResponse(userMessage.content, assistantMessageId);
-    }
-  };
-
-  const handleFallbackResponse = async (userInput: string, messageId: string) => {
-    try {
-      const { chatWithVeryChat } = await import('../../services/verychatService');
-      const response = await chatWithVeryChat(userInput, false);
-      
+      console.error('VeryChat API error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to connect to VeryChat API';
       setMessages(prev => prev.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, content: response, isStreaming: false }
+        msg.id === assistantMessageId 
+          ? { ...msg, content: `Error: ${errorMessage}`, isStreaming: false }
           : msg
       ));
-    } catch (error) {
-      console.error('Fallback error:', error);
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId 
-          ? { 
-              ...msg, 
-              content: 'Sorry, I encountered an error. Please try again later.',
-              isStreaming: false 
-            }
-          : msg
-      ));
-    } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

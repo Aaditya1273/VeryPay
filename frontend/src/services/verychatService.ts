@@ -152,45 +152,22 @@ export const sendMessageToVeryChatStream = async (
   }
 };
 
-// Fallback to mock responses if VeryChat is not configured (for development)
-export const getMockResponse = (_message: string): string => {
-  const responses = [
-    "I'm here to help you with VPay! What would you like to know?",
-    "VPay offers secure Web3 payments, task marketplace, and rewards system. How can I assist you?",
-    "You can use VPay for sending payments, browsing tasks, earning rewards, and managing your crypto wallet. What interests you most?",
-    "I can help you navigate VPay's features like wallet management, task completion, and reward redemption. What do you need help with?",
-  ];
-  
-  return responses[Math.floor(Math.random() * responses.length)];
-};
-
 // Main service function that handles both streaming and non-streaming
 export const chatWithVeryChat = async (
   message: string,
   useStreaming: boolean = false,
   streamCallbacks?: StreamingResponse
 ): Promise<string> => {
-  // Check if VeryChat is configured
+  // Require VeryChat API key for production
   if (!isVeryChatConfigured()) {
-    console.warn('VeryChat not configured, using mock response');
-    const mockResponse = getMockResponse(message);
+    const errorMessage = 'VeryChat API key is required. Please configure VITE_VERYCHAT_API_KEY in your environment variables.';
     
     if (useStreaming && streamCallbacks) {
-      // Simulate streaming for mock response
-      const words = mockResponse.split(' ');
-      let currentMessage = '';
-      
-      for (let i = 0; i < words.length; i++) {
-        currentMessage += (i > 0 ? ' ' : '') + words[i];
-        streamCallbacks.onMessage(words[i] + (i < words.length - 1 ? ' ' : ''));
-        await new Promise(resolve => setTimeout(resolve, 100)); // Simulate typing delay
-      }
-      
-      streamCallbacks.onComplete(mockResponse);
-      return mockResponse;
+      streamCallbacks.onError(errorMessage);
+      return '';
     }
     
-    return mockResponse;
+    throw new Error(errorMessage);
   }
 
   if (useStreaming && streamCallbacks) {

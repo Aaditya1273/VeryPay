@@ -5,7 +5,7 @@ import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import { useSBT } from '../../contexts/SBTContext';
 import { useDID } from '../../contexts/DIDContext';
-import { useAccount } from 'wagmi';
+import { useWallet } from '../../contexts/WalletContext';
 import { 
   Trophy, 
   Star, 
@@ -107,8 +107,8 @@ const AchievementCard: React.FC<AchievementCardProps> = ({ token, index }) => {
 };
 
 export const LoyaltyDashboard: React.FC = () => {
-  const { isConnected } = useAccount();
-  const { did, reputationCredential, getReputationScore } = useDID();
+  const { isConnected } = useWallet();
+  const { getReputationScore } = useDID();
   const {
     userTokens,
     totalTokens,
@@ -117,7 +117,6 @@ export const LoyaltyDashboard: React.FC = () => {
     activityStreaks,
     getTokensByType,
     getNextMilestone,
-    getActiveStreaks,
     checkAndMintMilestones,
     checkAndMintStreaks,
     loading

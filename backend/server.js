@@ -8,15 +8,14 @@ const { txLogger, kycCheck, rateLimiter } = require('./middleware/security');
 
 // Import AI Rewards routes
 const aiRewardsRoutes = require('./routes/aiRewards');
-// Import DID routes
 const didRoutes = require('./routes/did');
-// Import SBT routes
 const sbtRoutes = require('./routes/sbt');
-// Import Gamification routes
 const questRoutes = require('./routes/quests');
 const streakRoutes = require('./routes/streaks');
 const leaderboardRoutes = require('./routes/leaderboards');
 const nftBadgeRoutes = require('./routes/nftBadges');
+const onrampRoutes = require('./routes/onramp')
+const settlementsRoutes = require('./routes/settlements');
 
 const app = express();
 const server = http.createServer(app);
@@ -558,6 +557,16 @@ app.use('/api/quests', questRoutes);
 app.use('/api/streaks', streakRoutes);
 app.use('/api/leaderboards', leaderboardRoutes);
 app.use('/api/nft-badges', nftBadgeRoutes);
+
+// On-ramp Routes
+app.use('/api/onramp', onrampRoutes);
+
+// Settlement Routes
+app.use('/api/settlements', settlementsRoutes);
+
+// Compliance Routes
+const complianceRoutes = require('./routes/compliance');
+app.use('/api/compliance', complianceRoutes);
 
 // =============================================================================
 // SERVER STARTUP

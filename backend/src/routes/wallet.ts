@@ -162,11 +162,30 @@ router.post('/send',
       data: { totalEarnings: { increment: amount } }
     })
 
-    // Emit real-time notification
+    // Emit real-time notifications
     const io = req.app.get('io')
+    
+    // Notify recipient
     io.to(`user-${recipient.id}`).emit('payment-received', {
       transaction,
       message: `You received ${amount} VRC from ${req.user.username}`
+    })
+    
+    // Send payment event notification to both users
+    io.to(`user-${recipient.id}`).emit('payment-event', {
+      type: 'success',
+      message: `Payment received: ${amount} VRC from ${req.user.username}`,
+      amount,
+      from: req.user.username,
+      timestamp: new Date().toISOString()
+    })
+    
+    io.to(`user-${req.user.id}`).emit('payment-event', {
+      type: 'success', 
+      message: `Payment sent: ${amount} VRC to ${recipient.username}`,
+      amount,
+      to: recipient.username,
+      timestamp: new Date().toISOString()
     })
 
     res.json({

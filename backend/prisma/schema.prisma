@@ -44,6 +44,8 @@ model User {
   userBadges       UserBadge[]
   leaderboardEntries LeaderboardEntry[]
   userLevel        UserLevel?
+  onrampTransactions OnrampTransaction[]
+  merchantSettlements MerchantSettlement[]
 
   @@map("users")
 }
@@ -142,6 +144,58 @@ model Transaction {
   user        User            @relation(fields: [userId], references: [id])
 
   @@map("transactions")
+}
+
+model OnrampTransaction {
+  id              String    @id @default(cuid())
+  userId          String
+  fiatCurrency    String    // USD, EUR, GBP, etc.
+  cryptoCurrency  String    // ETH, USDC, USDT, DAI
+  fiatValue       Float     // Amount in fiat
+  cryptoValue     Float?    // Amount received in crypto
+  userAddress     String    // Destination wallet address
+  status          String    @default("INITIATED") // INITIATED, PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED, EXPIRED
+  provider        String    @default("RAMP") // RAMP, TRANSAK
+  externalId      String?   // Our reference ID for the provider
+  rampPurchaseId  String?   // Ramp's purchase ID
+  rampUrl         String?   // Ramp widget URL
+  rampData        Json?     // Full Ramp response data
+  metadata        Json?     // Additional transaction metadata
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+  @@index([externalId])
+  @@index([rampPurchaseId])
+  @@map("onramp_transactions")
+}
+
+model MerchantSettlement {
+  id              String    @id @default(cuid())
+  userId          String    // Merchant user ID
+  settlementType  String    // FIAT, STABLECOIN
+  currency        String    // USD, EUR, USDC, USDT
+  amount          Float     // Settlement amount
+  status          String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  bankAccount     Json?     // Bank account details for fiat settlements
+  walletAddress   String?   // Wallet address for crypto settlements
+  provider        String?   // Settlement provider (bank, exchange)
+  externalId      String?   // External settlement reference
+  fees            Float     @default(0)
+  netAmount       Float     // Amount after fees
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+  @@map("merchant_settlements")
 }
 
 model UserReward {

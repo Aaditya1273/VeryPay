@@ -92,13 +92,13 @@ const MerchantCustomerChat: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400';
       case 'waiting':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400';
       case 'closed':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -117,13 +117,13 @@ const MerchantCustomerChat: React.FC = () => {
   };
 
   return (
-    <div className="flex h-full bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="flex h-full bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
       {/* Chat Sessions List */}
-      <div className="w-1/3 border-r border-gray-200 flex flex-col">
+      <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-purple-50">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-purple-50 dark:bg-gray-800">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
               <MessageSquare className="h-5 w-5 mr-2 text-purple-600" />
               Customer Support
             </h2>
@@ -144,7 +144,7 @@ const MerchantCustomerChat: React.FC = () => {
                 placeholder="Search customers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
 
@@ -153,7 +153,7 @@ const MerchantCustomerChat: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="flex-1 px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="flex-1 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -169,21 +169,21 @@ const MerchantCustomerChat: React.FC = () => {
           {filteredSessions.length === 0 ? (
             <div className="p-8 text-center">
               <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No chat sessions found</p>
+              <p className="text-gray-500 dark:text-gray-400">No chat sessions found</p>
             </div>
           ) : (
             filteredSessions.map((session) => (
               <div
                 key={session.id}
                 onClick={() => setSelectedChat(session.id)}
-                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                  selectedChat === session.id ? 'bg-purple-50 border-purple-200' : ''
+                className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                  selectedChat === session.id ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700' : ''
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="text-sm font-medium text-gray-900 truncate">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {session.customerName}
                       </h3>
                       <div className="flex items-center space-x-2">
@@ -198,14 +198,14 @@ const MerchantCustomerChat: React.FC = () => {
                       </div>
                     </div>
                     
-                    <p className="text-xs text-gray-500 mb-2">{session.customerEmail}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{session.customerEmail}</p>
                     
-                    <p className="text-sm text-gray-600 truncate mb-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate mb-2">
                       {session.lastMessage}
                     </p>
                     
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center text-xs text-gray-400">
+                      <div className="flex items-center text-xs text-gray-400 dark:text-gray-500">
                         <Clock className="h-3 w-3 mr-1" />
                         {formatTime(session.lastMessageTime)}
                       </div>
@@ -250,13 +250,13 @@ const MerchantCustomerChat: React.FC = () => {
             />
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
+          <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
             <div className="text-center">
               <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 Select a chat to start
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
                 Choose a customer conversation from the list to begin chatting
               </p>
               <button

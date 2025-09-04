@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { useWallet } from '@/contexts/WalletContext'
+import RainbowKitConnectButton from '@/components/wallet/RainbowKitConnectButton'
+import { useAccount } from 'wagmi'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
-import { Wallet, Briefcase, Gift, TrendingUp, AlertCircle, Clock, CheckCircle, Award, Loader2 } from 'lucide-react'
+import { Wallet, Briefcase, Gift, TrendingUp, Clock, CheckCircle, Award, Loader2 } from 'lucide-react'
 import axios from 'axios'
-import toast from 'react-hot-toast'
 
 interface ActivityItem {
   id: string
@@ -21,7 +21,8 @@ interface ActivityItem {
 
 export default function HomePage() {
   const { user } = useAuth()
-  const { account, balance, connectWallet, isConnected, isConnecting } = useWallet()
+  const { address, isConnected } = useAccount()
+  const mockBalance = "1,234.56" // Mock balance for display
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loadingActivities, setLoadingActivities] = useState(false)
 
@@ -94,7 +95,7 @@ export default function HomePage() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(parseFloat(balance))}</div>
+            <div className="text-2xl font-bold">{isConnected ? `$${mockBalance}` : '$0.00'}</div>
             <p className="text-xs text-muted-foreground">
               {isConnected ? 'Connected' : 'Not connected'}
             </p>
@@ -188,16 +189,7 @@ export default function HomePage() {
             <p className="text-yellow-700 dark:text-yellow-300">
               Connect your wallet to start sending payments and earning rewards.
             </p>
-            <Button 
-              onClick={() => {
-                console.log('Connect Wallet button clicked')
-                connectWallet()
-              }} 
-              variant="vpay"
-              disabled={isConnecting}
-            >
-              {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-            </Button>
+            <RainbowKitConnectButton variant="default" size="lg" />
           </CardContent>
         </Card>
       )}

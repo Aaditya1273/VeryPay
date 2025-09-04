@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { useWallet } from '../../contexts/WalletContext'
+import { useAccount } from 'wagmi'
 import { formatCurrency, formatAddress } from '../../lib/utils'
 import { ChatWindowEnhanced } from '../chat/ChatWindowEnhanced'
 import { ChatToggle } from '../chat/ChatToggle'
@@ -83,7 +83,7 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const { account, balance, isConnected } = useWallet()
+  const { address, isConnected } = useAccount()
 
   // Load theme preference from localStorage
   useEffect(() => {
@@ -234,7 +234,7 @@ export default function Layout({ children }: LayoutProps) {
                   <div className="hidden sm:flex items-center space-x-2 px-3 py-1 bg-purple-50 dark:bg-purple-900/20 rounded-full">
                     <Wallet className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                      {formatCurrency(parseFloat(balance))}
+                      Connected
                     </span>
                   </div>
                 )}
@@ -297,11 +297,11 @@ export default function Layout({ children }: LayoutProps) {
                   {/* Dropdown Menu */}
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="py-1">
-                      {account && (
+                      {address && (
                         <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                           <p className="text-xs text-gray-500 dark:text-gray-400">Wallet</p>
                           <p className="text-sm font-mono text-gray-900 dark:text-white">
-                            {formatAddress(account)}
+                            {formatAddress(address)}
                           </p>
                         </div>
                       )}
@@ -365,11 +365,11 @@ export default function Layout({ children }: LayoutProps) {
                     <Wallet className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     <div>
                       <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                        Balance: {formatCurrency(parseFloat(balance))}
+                        Wallet Connected
                       </p>
-                      {account && (
+                      {address && (
                         <p className="text-xs text-purple-600 dark:text-purple-400 font-mono">
-                          {formatAddress(account)}
+                          {formatAddress(address)}
                         </p>
                       )}
                     </div>

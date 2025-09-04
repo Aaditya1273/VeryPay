@@ -38,7 +38,7 @@ const WalletDashboardPage = () => {
   const [showSendForm, setShowSendForm] = useState(false);
 
   // Contract configuration
-  const VPAY_PAYMENTS_ADDRESS = process.env.REACT_APP_VPAY_PAYMENTS_ADDRESS || '';
+  const VPAY_PAYMENTS_ADDRESS = import.meta.env.REACT_APP_VPAY_PAYMENTS_ADDRESS || '';
   const PAYMENT_ABI = [
     "function deposit() external payable",
     "function transfer(address to, uint256 amount) external",

@@ -47,6 +47,8 @@ export const protect = asyncHandler(async (req: AuthRequest, res: Response, next
   }
 })
 
+export const authenticateToken = protect
+
 export const admin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.user && req.user.role === 'admin') {
     next()

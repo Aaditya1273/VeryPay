@@ -1,6 +1,6 @@
-import { createConfig, http } from 'wagmi'
+import { http } from 'wagmi'
 import { mainnet, polygon, bsc } from 'wagmi/chains'
-import { coinbaseWallet, injected, walletConnect } from 'wagmi/connectors'
+import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 
 // Chain configurations with RPC endpoints
 export const supportedChains = [mainnet, polygon, bsc] as const
@@ -48,23 +48,15 @@ export const chainMetadata = {
   }
 } as const
 
-// Wagmi configuration
-export const config = createConfig({
+// RainbowKit configuration
+export const config = getDefaultConfig({
+  appName: 'VPay - Web3 Micro-Economy',
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '2f05a7cdc2674bb905d564890b2b130c',
   chains: supportedChains,
-  connectors: [
-    injected(),
-    coinbaseWallet({
-      appName: 'VPay',
-      appLogoUrl: 'https://vpay.app/logo.png',
-    }),
-    walletConnect({
-      projectId: import.meta.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'your-project-id',
-    }),
-  ],
   transports: {
-    [mainnet.id]: http(import.meta.env.NEXT_PUBLIC_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'),
-    [polygon.id]: http(import.meta.env.NEXT_PUBLIC_POLYGON_RPC_URL || 'https://polygon.llamarpc.com'),
-    [bsc.id]: http(import.meta.env.NEXT_PUBLIC_BSC_RPC_URL || 'https://bsc.llamarpc.com'),
+    [mainnet.id]: http(import.meta.env.VITE_ETHEREUM_RPC_URL || 'https://eth.llamarpc.com'),
+    [polygon.id]: http(import.meta.env.VITE_POLYGON_RPC_URL || 'https://polygon.llamarpc.com'),
+    [bsc.id]: http(import.meta.env.VITE_BSC_RPC_URL || 'https://bsc.llamarpc.com'),
   },
 })
 

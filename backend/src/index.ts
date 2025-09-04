@@ -16,6 +16,8 @@ import walletRoutes from './routes/wallet'
 import tasksRoutes from './routes/tasks'
 import rewardsRoutes from './routes/rewards'
 import userRoutes from './routes/users'
+import onrampRoutes from './routes/onramp'
+import settlementsRoutes from './routes/settlements'
 
 // Load environment variables
 dotenv.config()
@@ -55,6 +57,8 @@ app.use('/api/wallet', walletRoutes)
 app.use('/api/tasks', tasksRoutes)
 app.use('/api/rewards', rewardsRoutes)
 app.use('/api/user', userRoutes)
+app.use('/api/onramp', onrampRoutes)
+app.use('/api/settlements', settlementsRoutes)
 
 // Socket.IO for real-time features
 io.on('connection', (socket) => {

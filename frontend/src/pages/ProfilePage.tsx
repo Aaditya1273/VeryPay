@@ -77,7 +77,7 @@ export default function ProfilePage() {
       setFormData({
         fullName: profileData.fullName || profileData.username || '',
         bio: profileData.bio || '',
-        skills: profileData.skills?.join(', ') || ''
+        skills: Array.isArray(profileData.skills) ? profileData.skills.join(', ') : (profileData.skills || '')
       })
     } catch (err: any) {
       console.error('Error fetching profile:', err)

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Trophy, Star, Gift, Clock, Target, Zap, Crown, Brain, BarChart3 } from 'lucide-react'
-import { useWallet } from '@/contexts/WalletContext'
+import { useAccount } from 'wagmi'
 import PersonalizedRewards from '@/components/rewards/PersonalizedRewards'
 import RewardAnalyticsDashboard from '@/components/rewards/RewardAnalyticsDashboard'
 import axios from 'axios'
@@ -53,13 +53,13 @@ export default function RewardsPage() {
   const [rewards, setRewards] = useState<Reward[]>([])
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const { isConnected, account } = useWallet()
+  const { isConnected, address } = useAccount()
 
   useEffect(() => {
-    if (isConnected && account) {
+    if (isConnected && address) {
       fetchRewardsData()
     }
-  }, [isConnected, account])
+  }, [isConnected, address])
 
   const fetchRewardsData = async () => {
     try {
@@ -67,7 +67,7 @@ export default function RewardsPage() {
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
       
       // Fetch user points and stats
-      const userResponse = await axios.get(`${API_BASE}/rewards/user/${account}`)
+      const userResponse = await axios.get(`${API_BASE}/rewards/user/${address}`)
       if (userResponse.data) {
         setUserStats(userResponse.data)
       }
@@ -109,12 +109,12 @@ export default function RewardsPage() {
   }
 
   const handleRedeemReward = async (rewardId: string) => {
-    if (!account) return
+    if (!address) return
     
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
       await axios.post(`${API_BASE}/rewards/${rewardId}/redeem`, {
-        walletAddress: account
+        walletAddress: address
       })
       
       // Refresh data after redemption

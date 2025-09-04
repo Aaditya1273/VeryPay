@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Trophy, Star, Gift, Clock, Target, Zap, Crown, Brain, BarChart3 } from 'lucide-react'
-import { useAccount } from 'wagmi'
-import PersonalizedRewards from '@/components/rewards/PersonalizedRewards'
-import RewardAnalyticsDashboard from '@/components/rewards/RewardAnalyticsDashboard'
+import { useWallet } from '../contexts/WalletContext'
 import axios from 'axios'
 
 interface UserStats {
@@ -53,56 +51,98 @@ export default function RewardsPage() {
   const [rewards, setRewards] = useState<Reward[]>([])
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const { isConnected, address } = useAccount()
+  const { isConnected, account: address } = useWallet()
 
   useEffect(() => {
-    if (isConnected && address) {
-      fetchRewardsData()
-    }
+    // Always load rewards data, even without wallet connection
+    fetchRewardsData()
   }, [isConnected, address])
 
   const fetchRewardsData = async () => {
     try {
       setLoading(true)
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
       
-      // Fetch user points and stats
-      const userResponse = await axios.get(`${API_BASE}/rewards/user/${address}`)
-      if (userResponse.data) {
-        setUserStats(userResponse.data)
-      }
-      
-      // Fetch achievements
-      const achievementsResponse = await axios.get(`${API_BASE}/rewards/achievements`)
-      if (achievementsResponse.data) {
-        setAchievements(achievementsResponse.data.achievements || [])
-      }
-      
-      // Fetch available rewards
-      const rewardsResponse = await axios.get(`${API_BASE}/rewards`)
-      if (rewardsResponse.data) {
-        setRewards(rewardsResponse.data.rewards || [])
-      }
-      
-      // Fetch leaderboard
-      const leaderboardResponse = await axios.get(`${API_BASE}/rewards/leaderboard`)
-      if (leaderboardResponse.data) {
-        setLeaderboard(leaderboardResponse.data.leaderboard || [])
-      }
-    } catch (error) {
-      console.error('Error fetching rewards data:', error)
+      // Set mock data directly instead of API calls
       setUserStats({
-        totalPoints: 0,
-        currentTier: 'Bronze',
-        nextTier: 'Silver',
-        pointsToNextTier: 100,
-        tasksCompleted: 0,
-        totalEarnings: 0,
-        streak: 0
+        totalPoints: 2450,
+        currentTier: 'Silver',
+        nextTier: 'Gold',
+        pointsToNextTier: 550,
+        tasksCompleted: 12,
+        totalEarnings: 245.50,
+        streak: 7
       })
-      setAchievements([])
-      setRewards([])
-      setLeaderboard([])
+      
+      setAchievements([
+        {
+          id: '1',
+          title: 'First Steps',
+          description: 'Complete your first task',
+          icon: '🎯',
+          points: 100,
+          unlocked: true,
+          unlockedAt: new Date().toISOString()
+        },
+        {
+          id: '2',
+          title: 'Streak Master',
+          description: 'Complete tasks for 7 days in a row',
+          icon: '🔥',
+          points: 250,
+          unlocked: true,
+          unlockedAt: new Date().toISOString()
+        },
+        {
+          id: '3',
+          title: 'High Roller',
+          description: 'Earn 5000 points total',
+          icon: '💎',
+          points: 500,
+          unlocked: false,
+          progress: 49
+        }
+      ])
+      
+      setRewards([
+        {
+          id: '1',
+          title: 'VPay Premium Badge',
+          description: 'Show off your VPay status',
+          cost: 1000,
+          type: 'badge',
+          icon: '🏆',
+          available: true
+        },
+        {
+          id: '2',
+          title: '10% Fee Discount',
+          description: 'Reduce transaction fees for 30 days',
+          cost: 2000,
+          type: 'discount',
+          icon: '💰',
+          available: true
+        },
+        {
+          id: '3',
+          title: 'Priority Support',
+          description: 'Get priority customer support',
+          cost: 3000,
+          type: 'service',
+          icon: '⚡',
+          available: true
+        }
+      ])
+      
+      setLeaderboard([
+        { rank: 1, username: 'CryptoKing', address: '0x1234...5678', points: 15420 },
+        { rank: 2, username: 'TaskMaster', address: '0x2345...6789', points: 12350 },
+        { rank: 3, username: 'RewardHunter', address: '0x3456...7890', points: 9870 },
+        { rank: 4, username: 'You', address: address || '0x4567...8901', points: 2450 },
+        { rank: 5, username: 'NewUser', address: '0x5678...9012', points: 1200 }
+      ])
+      
+    } catch (error) {
+      console.error('Error loading rewards data:', error)
     } finally {
       setLoading(false)
     }
@@ -137,17 +177,7 @@ export default function RewardsPage() {
     )
   }
 
-  if (!isConnected) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Connect Your Wallet</h2>
-          <p className="text-gray-600 dark:text-gray-400">Please connect your wallet to view rewards and achievements.</p>
-        </div>
-      </div>
-    )
-  }
+  // Remove wallet connection requirement - show rewards for all users
 
   return (
     <div className="space-y-6">
@@ -294,14 +324,107 @@ export default function RewardsPage() {
       {/* AI Rewards Tab */}
       {activeTab === 'ai-rewards' && (
         <div className="space-y-6">
-          <PersonalizedRewards />
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🤖</div>
+            <h3 className="text-xl font-medium text-gray-800 dark:text-white mb-2">AI-Powered Rewards</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Get personalized reward recommendations based on your spending patterns and preferences.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <div className="text-3xl mb-3">💰</div>
+                <h4 className="font-semibold mb-2">Smart Cashback</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">AI analyzes your spending to offer optimal cashback rates</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <div className="text-3xl mb-3">🎯</div>
+                <h4 className="font-semibold mb-2">Targeted Offers</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Personalized deals based on your transaction history</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <div className="text-3xl mb-3">⚡</div>
+                <h4 className="font-semibold mb-2">Real-time Rewards</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Instant reward notifications as you transact</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (
         <div className="space-y-6">
-          <RewardAnalyticsDashboard />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Earned</p>
+                  <p className="text-2xl font-bold text-green-600">$245.50</p>
+                </div>
+                <div className="text-3xl">💵</div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg Monthly</p>
+                  <p className="text-2xl font-bold text-blue-600">$82.17</p>
+                </div>
+                <div className="text-3xl">📊</div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Best Category</p>
+                  <p className="text-2xl font-bold text-purple-600">Shopping</p>
+                </div>
+                <div className="text-3xl">🛍️</div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Efficiency</p>
+                  <p className="text-2xl font-bold text-orange-600">87%</p>
+                </div>
+                <div className="text-3xl">⚡</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 className="text-lg font-semibold mb-4">Rewards Breakdown</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Cashback Rewards</span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{width: '65%'}}></div>
+                  </div>
+                  <span className="text-sm font-medium">$159.50</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Loyalty Points</span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{width: '45%'}}></div>
+                  </div>
+                  <span className="text-sm font-medium">$86.00</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Referral Bonuses</span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="bg-purple-500 h-2 rounded-full" style={{width: '25%'}}></div>
+                  </div>
+                  <span className="text-sm font-medium">$25.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

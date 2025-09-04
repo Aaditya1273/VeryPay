@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { useAccount } from 'wagmi'
+import { useWallet } from '../../contexts/WalletContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { formatAddress } from '../../lib/utils'
 import { ChatWindowEnhanced } from '../chat/ChatWindowEnhanced'
 import { ChatToggle } from '../chat/ChatToggle'
@@ -13,22 +14,18 @@ import {
   Briefcase, 
   Gift, 
   User, 
+  Menu, 
+  X, 
   Sun, 
   Moon, 
-  Menu, 
-  X,
-  LogOut,
-  // Trophy, // Temporarily removed with gamification
-  Target,
-  Flame,
-  Crown,
-  Award,
+  ChevronDown, 
+  LogOut, 
+  CreditCard, 
+  DollarSign, 
+  Shield, 
+  MessageSquare, 
   HelpCircle,
-  Users,
-  ChevronDown,
-  CreditCard,
-  DollarSign,
-  Shield
+  Users
 } from 'lucide-react'
 
 // Simple Button component
@@ -77,38 +74,16 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const { user, logout } = useAuth()
+  const { isConnected, account: address } = useWallet()
+  const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
-  const { address, isConnected } = useAccount()
+  const isDarkMode = theme === 'dark'
 
-  // Load theme preference from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('vpay-theme')
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true)
-      document.documentElement.classList.add('dark')
-    } else {
-      setIsDarkMode(false)
-      document.documentElement.classList.remove('dark')
-    }
-  }, [])
 
-  // Toggle theme and save to localStorage
-  const toggleTheme = () => {
-    const newTheme = !isDarkMode
-    setIsDarkMode(newTheme)
-    localStorage.setItem('vpay-theme', newTheme ? 'dark' : 'light')
-    
-    if (newTheme) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }
 
   const handleLogout = async () => {
     await logout()
@@ -120,6 +95,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Wallet', href: '/wallet', icon: Wallet },
     { name: 'Tasks', href: '/tasks', icon: Briefcase },
     { name: 'Rewards', href: '/rewards', icon: Gift },
+    { name: 'Messages', href: '/messages', icon: MessageSquare },
     // { name: 'Gamification', href: '/gamification', icon: Trophy }, // Temporarily disabled
     { name: 'On-ramp', href: '/onramp-settlements', icon: CreditCard },
     { name: 'Settlements', href: '/merchant-settlements', icon: DollarSign },

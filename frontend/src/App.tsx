@@ -37,6 +37,7 @@ import { LoyaltyDashboard } from './components/loyalty/LoyaltyDashboard'
 // import NFTBadgeCollection from './components/gamification/NFTBadgeCollection'
 import MerchantCustomerChat from './components/chat/MerchantCustomerChat'
 import AIFAQChatbot from './components/chat/AIFAQChatbot'
+import MessagesPage from './pages/MessagesPage'
 import OnrampSettlementDashboard from './components/dashboard/OnrampSettlementDashboard'
 import MerchantSettlementDashboard from './components/settlements/MerchantSettlementDashboard'
 import ComplianceDashboard from './components/compliance/ComplianceDashboard'
@@ -233,6 +234,14 @@ function App() {
         </ProtectedRoute>
       } />
       */}
+      
+      <Route path="/messages" element={
+        <ProtectedRoute>
+          <Layout>
+            <MessagesPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
       
       <Route path="/support" element={
         <ProtectedRoute>

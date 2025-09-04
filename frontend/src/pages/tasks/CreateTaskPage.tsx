@@ -70,12 +70,37 @@ export default function CreateTaskPage() {
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const taskData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        budget: parseFloat(formData.budget),
+        deadline: formData.duration,
+        skills: formData.skills,
+        location: formData.location,
+        requirements: formData.requirements
+      }
+
+      // Call the actual API to create the task
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/tasks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('vpay-token')}`
+        },
+        body: JSON.stringify(taskData)
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create task')
+      }
+
+      await response.json()
       
       toast.success('Task posted successfully!')
       navigate('/tasks')
     } catch (error) {
+      console.error('Error creating task:', error)
       toast.error('Failed to post task')
     } finally {
       setIsLoading(false)

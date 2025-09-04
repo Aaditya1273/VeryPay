@@ -129,6 +129,13 @@ const AIFAQChatbot: React.FC = () => {
   });
 
   const handleQuickAction = (query: string) => {
+    // Check if user wants human support
+    if (query.toLowerCase().includes('customer support') || query.toLowerCase().includes('human assistance')) {
+      // Redirect to general messaging with customer support
+      window.location.href = '/messages?support=true';
+      return;
+    }
+    
     sendAIQuery(query, { source: 'faq-chatbot', timestamp: new Date().toISOString() });
     setShowQuickActions(false);
   };

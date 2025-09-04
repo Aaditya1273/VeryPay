@@ -14,6 +14,7 @@ import walletRoutes from './routes/wallet'
 import taskRoutes from './routes/tasks'
 import rewardRoutes from './routes/rewards'
 import userRoutes from './routes/users'
+import kycRoutes from './routes/kyc'
 
 // Import middleware
 import { errorHandler } from './middleware/errorMiddleware'
@@ -50,6 +51,7 @@ app.use('/api/wallet', walletRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/rewards', rewardRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/kyc', kycRoutes)
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -85,7 +85,6 @@ const RewardNotifications: React.FC = () => {
         
         // Show toast notification
         toast.success('New reward recommendation available!', {
-          icon: '🎁',
           duration: 4000
         });
       }

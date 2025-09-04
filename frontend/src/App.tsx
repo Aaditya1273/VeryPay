@@ -19,15 +19,15 @@ import LandingPage from './pages/LandingPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
-import OnboardingPage from './pages/auth/OnboardingPage'
-import WalletPage from './pages/WalletPage'
+import CreateTaskPage from './pages/tasks/CreateTaskPage'
+import KYCPage from './pages/KYCPage'
 import TasksPage from './pages/TasksPage'
-import TaskMarketplace from './pages/TaskMarketplace'
 import RewardsPage from './pages/RewardsPage'
 import ProfilePage from './pages/ProfilePage'
 import SendPaymentPage from './pages/payments/SendPaymentPage'
 import ReceivePaymentPage from './pages/payments/ReceivePaymentPage'
-import CreateTaskPage from './pages/tasks/CreateTaskPage'
+import OnboardingPage from './pages/auth/OnboardingPage'
+import WalletPage from './pages/WalletPage'
 import { LoyaltyDashboard } from './components/loyalty/LoyaltyDashboard'
 // Gamification components temporarily disabled due to missing dependencies
 // import GamifiedLoyaltyDashboard from './components/gamification/GamifiedLoyaltyDashboard'
@@ -118,7 +118,7 @@ function App() {
       <Route path="/marketplace" element={
         <ProtectedRoute>
           <Layout>
-            <TaskMarketplace />
+            <TasksPage />
           </Layout>
         </ProtectedRoute>
       } />
@@ -135,6 +135,14 @@ function App() {
         <ProtectedRoute>
           <Layout>
             <ProfilePage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/kyc" element={
+        <ProtectedRoute>
+          <Layout>
+            <KYCPage />
           </Layout>
         </ProtectedRoute>
       } />

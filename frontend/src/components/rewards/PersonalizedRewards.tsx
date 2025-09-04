@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { usePersonalizedRewards, PersonalizedReward } from '../../hooks/usePersonalizedRewards';
 import { toast } from 'react-hot-toast';
+import { Target, Star, Zap, Gift, Crown } from 'lucide-react';
 
 const RewardTypeIcon = ({ type }: { type: PersonalizedReward['rewardType'] }) => {
-  const icons = {
-    CASHBACK: '💰',
-    NFT: '🎨',
-    BONUS_TOKENS: '🪙',
-    DISCOUNT: '🏷️',
-    EXCLUSIVE_ACCESS: '⭐'
+  const iconComponents = {
+    CASHBACK: <Target className="h-6 w-6 text-green-600" />,
+    NFT: <Star className="h-6 w-6 text-purple-600" />,
+    BONUS_TOKENS: <Zap className="h-6 w-6 text-yellow-600" />,
+    DISCOUNT: <Gift className="h-6 w-6 text-blue-600" />,
+    EXCLUSIVE_ACCESS: <Crown className="h-6 w-6 text-orange-600" />
   };
-  return <span className="text-2xl">{icons[type]}</span>;
+  return <div className="w-8 h-8 flex items-center justify-center">{iconComponents[type]}</div>;
 };
 
 const ConfidenceBar = ({ confidence }: { confidence: number }) => {
@@ -220,7 +221,9 @@ const PersonalizedRewards: React.FC = () => {
 
       {recommendations.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">🎯</div>
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Target className="h-8 w-8 text-blue-600" />
+          </div>
           <h3 className="text-xl font-medium text-gray-800 mb-2">No Recommendations Yet</h3>
           <p className="text-gray-600 mb-6">
             Start using VPay to receive personalized AI-powered reward recommendations!

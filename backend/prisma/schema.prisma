@@ -34,7 +34,6 @@ model User {
   applications     TaskApplication[]
   userRewards      UserReward[]
   userAchievements UserAchievement[]
-  kycDocuments     KycDocument[]
   transactions     Transaction[]
   userActivities   UserActivity[]
   rewardRecommendations RewardRecommendation[]
@@ -46,6 +45,8 @@ model User {
   userLevel        UserLevel?
   onrampTransactions OnrampTransaction[]
   merchantSettlements MerchantSettlement[]
+  kycVerification  KYCVerification?
+  kycDocuments     KYCDocument[]
 
   @@map("users")
 }
@@ -243,22 +244,6 @@ model UserAchievement {
   @@map("user_achievements")
 }
 
-model KycDocument {
-  id             String    @id @default(cuid())
-  userId         String
-  documentType   String    // passport, license, etc.
-  documentNumber String
-  documentImage  String    // File path
-  status         String    @default("PENDING") // PENDING, APPROVED, REJECTED
-  rejectionReason String?
-  submittedAt    DateTime  @default(now())
-  reviewedAt     DateTime?
-
-  // Relations
-  user           User      @relation(fields: [userId], references: [id])
-
-  @@map("kyc_documents")
-}
 
 // AI-Powered Rewards Engine Models
 
@@ -519,4 +504,45 @@ model QuestTemplate {
   createdAt     DateTime @default(now())
 
   @@map("quest_templates")
+}
+
+model KYCVerification {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  fullName      String
+  dateOfBirth   DateTime
+  address       String
+  phoneNumber   String?
+  nationality   String?
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewNotes   String?
+  submittedAt   DateTime @default(now())
+  reviewedAt    DateTime?
+  reviewedBy    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents     KYCDocument[]
+
+  @@map("kyc_verifications")
+}
+
+model KYCDocument {
+  id            String   @id @default(cuid())
+  userId        String
+  type          String   // passport, drivers_license, national_id, selfie
+  filename      String
+  originalName  String
+  path          String
+  size          Int
+  mimeType      String
+  uploadedAt    DateTime @default(now())
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kycVerification KYCVerification @relation(fields: [userId], references: [userId])
+
+  @@map("kyc_documents")
 }

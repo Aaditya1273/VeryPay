@@ -78,7 +78,7 @@ export default function RewardsPage() {
           id: '1',
           title: 'First Steps',
           description: 'Complete your first task',
-          icon: '🎯',
+          icon: 'target',
           points: 100,
           unlocked: true,
           unlockedAt: new Date().toISOString()
@@ -87,7 +87,7 @@ export default function RewardsPage() {
           id: '2',
           title: 'Streak Master',
           description: 'Complete tasks for 7 days in a row',
-          icon: '🔥',
+          icon: 'flame',
           points: 250,
           unlocked: true,
           unlockedAt: new Date().toISOString()
@@ -96,7 +96,7 @@ export default function RewardsPage() {
           id: '3',
           title: 'High Roller',
           description: 'Earn 5000 points total',
-          icon: '💎',
+          icon: 'gem',
           points: 500,
           unlocked: false,
           progress: 49
@@ -110,7 +110,7 @@ export default function RewardsPage() {
           description: 'Show off your VPay status',
           cost: 1000,
           type: 'badge',
-          icon: '🏆',
+          icon: 'trophy',
           available: true
         },
         {
@@ -119,7 +119,7 @@ export default function RewardsPage() {
           description: 'Reduce transaction fees for 30 days',
           cost: 2000,
           type: 'discount',
-          icon: '💰',
+          icon: 'dollar-sign',
           available: true
         },
         {
@@ -128,7 +128,7 @@ export default function RewardsPage() {
           description: 'Get priority customer support',
           cost: 3000,
           type: 'service',
-          icon: '⚡',
+          icon: 'zap',
           available: true
         }
       ])
@@ -325,24 +325,32 @@ export default function RewardsPage() {
       {activeTab === 'ai-rewards' && (
         <div className="space-y-6">
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🤖</div>
+            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Brain className="h-8 w-8 text-blue-600" />
+            </div>
             <h3 className="text-xl font-medium text-gray-800 dark:text-white mb-2">AI-Powered Rewards</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Get personalized reward recommendations based on your spending patterns and preferences.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div className="text-3xl mb-3">💰</div>
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Target className="h-6 w-6 text-green-600" />
+                </div>
                 <h4 className="font-semibold mb-2">Smart Cashback</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">AI analyzes your spending to offer optimal cashback rates</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div className="text-3xl mb-3">🎯</div>
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Target className="h-6 w-6 text-purple-600" />
+                </div>
                 <h4 className="font-semibold mb-2">Targeted Offers</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Personalized deals based on your transaction history</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                <div className="text-3xl mb-3">⚡</div>
+                <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Zap className="h-6 w-6 text-yellow-600" />
+                </div>
                 <h4 className="font-semibold mb-2">Real-time Rewards</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Instant reward notifications as you transact</p>
               </div>
@@ -361,7 +369,9 @@ export default function RewardsPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">Total Earned</p>
                   <p className="text-2xl font-bold text-green-600">$245.50</p>
                 </div>
-                <div className="text-3xl">💵</div>
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                  <Target className="h-6 w-6 text-green-600" />
+                </div>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
@@ -370,7 +380,9 @@ export default function RewardsPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">Avg Monthly</p>
                   <p className="text-2xl font-bold text-blue-600">$82.17</p>
                 </div>
-                <div className="text-3xl">📊</div>
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                  <BarChart3 className="h-6 w-6 text-blue-600" />
+                </div>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
@@ -379,7 +391,9 @@ export default function RewardsPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">Best Category</p>
                   <p className="text-2xl font-bold text-purple-600">Shopping</p>
                 </div>
-                <div className="text-3xl">🛍️</div>
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                  <Gift className="h-6 w-6 text-purple-600" />
+                </div>
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
@@ -388,7 +402,9 @@ export default function RewardsPage() {
                   <p className="text-sm text-gray-600 dark:text-gray-400">Efficiency</p>
                   <p className="text-2xl font-bold text-orange-600">87%</p>
                 </div>
-                <div className="text-3xl">⚡</div>
+                <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-orange-600" />
+                </div>
               </div>
             </div>
           </div>
@@ -436,10 +452,17 @@ export default function RewardsPage() {
               <Card key={achievement.id} className={achievement.unlocked ? 'border-green-200 dark:border-green-800' : ''}>
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                       achievement.unlocked ? 'bg-green-100 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-800'
                     }`}>
-                      {achievement.unlocked ? achievement.icon : '🔒'}
+                      {achievement.unlocked ? (
+                        achievement.icon === 'target' ? <Target className="h-6 w-6 text-green-600" /> :
+                        achievement.icon === 'flame' ? <Zap className="h-6 w-6 text-orange-600" /> :
+                        achievement.icon === 'gem' ? <Star className="h-6 w-6 text-purple-600" /> :
+                        <Trophy className="h-6 w-6 text-yellow-600" />
+                      ) : (
+                        <div className="w-6 h-6 bg-gray-400 rounded-full"></div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold">{achievement.title}</h3>
@@ -499,8 +522,11 @@ export default function RewardsPage() {
               <Card key={reward.id} className={!reward.available ? 'opacity-60' : ''}>
                 <CardContent className="p-6">
                   <div className="text-center space-y-4">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto text-2xl">
-                      {reward.icon || '⭐'}
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto">
+                      {reward.icon === 'trophy' ? <Trophy className="h-8 w-8 text-yellow-600" /> :
+                       reward.icon === 'dollar-sign' ? <Target className="h-8 w-8 text-green-600" /> :
+                       reward.icon === 'zap' ? <Zap className="h-8 w-8 text-orange-600" /> :
+                       <Star className="h-8 w-8 text-purple-600" />}
                     </div>
                     <div>
                       <h3 className="font-semibold">{reward.title}</h3>

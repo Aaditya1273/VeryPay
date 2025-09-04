@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Plus, X } from 'lucide-react'
+import { ArrowLeft, X, Plus, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useAuth } from '@/contexts/AuthContext'
 
 const categories = [
   'Design', 'Writing', 'Marketing', 'Data Entry', 'Testing', 'Development', 
@@ -21,6 +22,8 @@ const skillSuggestions = [
 ]
 
 export default function CreateTaskPage() {
+  const navigate = useNavigate()
+  const { user, isAuthenticated } = useAuth()
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -33,8 +36,6 @@ export default function CreateTaskPage() {
   })
   const [skillInput, setSkillInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  
-  const navigate = useNavigate()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -69,6 +70,25 @@ export default function CreateTaskPage() {
     e.preventDefault()
     setIsLoading(true)
 
+    // Check authentication first
+    if (!isAuthenticated || !user) {
+      toast.error('Please log in to post a task')
+      navigate('/login')
+      return
+    }
+
+    // Check KYC status before allowing task creation
+    if (user.kycStatus !== 'approved') {
+      if (user.kycStatus === 'pending') {
+        toast.error('Your KYC verification is pending. Please wait for approval before posting tasks.')
+      } else if (user.kycStatus === 'rejected') {
+        toast.error('Your KYC verification was rejected. Please contact support to resolve this issue.')
+      } else {
+        toast.error('KYC verification required. Please complete your identity verification to post tasks.')
+      }
+      return
+    }
+
     try {
       // Convert duration to deadline date
       const deadlineDate = new Date()
@@ -87,11 +107,15 @@ export default function CreateTaskPage() {
         deadlineDate.setDate(deadlineDate.getDate() + 7)
       }
 
+      // Convert USD to VRC for backend storage
+      const usdAmount = parseFloat(formData.budget)
+      const vrcAmount = usdAmount * 0.76 // USD to VRC conversion rate
+
       const taskData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
-        budget: parseFloat(formData.budget),
+        budget: vrcAmount, // Store as VRC in backend
         deadline: deadlineDate.toISOString(),
         skills: formData.skills,
         location: formData.location || 'Remote',
@@ -115,7 +139,22 @@ export default function CreateTaskPage() {
       if (!response.ok) {
         const errorData = await response.text()
         console.error('API Error:', response.status, errorData)
-        throw new Error(`Failed to create task: ${response.status} ${errorData}`)
+        
+        if (response.status === 403) {
+          if (errorData.includes('KYC verification required')) {
+            toast.error('KYC verification required. Please complete your identity verification to post tasks.')
+            return
+          } else {
+            toast.error('You are not authorized to perform this action.')
+            return
+          }
+        } else if (response.status === 401) {
+          toast.error('Please log in again to continue.')
+          navigate('/login')
+          return
+        } else {
+          throw new Error(`Failed to create task: ${response.status}`)
+        }
       }
 
       await response.json()
@@ -149,6 +188,29 @@ export default function CreateTaskPage() {
           <p className="text-muted-foreground">Find the right person for your project</p>
         </div>
       </div>
+
+      {/* KYC Status Check */}
+      {user?.kycStatus !== 'approved' && (
+        <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/20 mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+              <AlertCircle className="h-5 w-5" />
+              KYC Verification Required
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-yellow-600 dark:text-yellow-400 mb-4">
+              You need to complete KYC verification before posting tasks on the platform.
+            </p>
+            <Button 
+              onClick={() => navigate('/kyc')}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              Complete KYC Verification
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
@@ -238,7 +300,7 @@ export default function CreateTaskPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="budget" className="text-sm font-medium">
-                  Budget (VRC) *
+                  Budget (USD) *
                 </label>
                 <input
                   id="budget"
@@ -246,14 +308,14 @@ export default function CreateTaskPage() {
                   type="number"
                   value={formData.budget}
                   onChange={handleInputChange}
-                  placeholder="100"
+                  placeholder="45"
                   min="1"
-                  step="1"
+                  step="0.01"
                   className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 />
-                <p className="text-xs text-muted-foreground">
-                  {formData.budget ? `${formData.budget} VRC` : '0 VRC'}
+                <p className="text-xs text-cyan-400">
+                  ≈ {formData.budget ? (parseFloat(formData.budget) * 0.76).toFixed(2) : '0.00'} VRC tokens
                 </p>
               </div>
 

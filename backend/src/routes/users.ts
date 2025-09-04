@@ -398,4 +398,38 @@ router.put('/preferences',
   })
 )
 
+// @desc    Update KYC status (for demo purposes)
+// @route   PUT /api/users/kyc
+// @access  Private
+router.put('/kyc',
+  protect,
+  [
+    body('status').isIn(['pending', 'approved', 'rejected']),
+  ],
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+
+    const { status } = req.body
+
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { kycStatus: status },
+      select: {
+        id: true,
+        username: true,
+        kycStatus: true,
+      }
+    })
+
+    res.json({
+      success: true,
+      user,
+      message: `KYC status updated to ${status}`
+    })
+  })
+)
+
 export default router

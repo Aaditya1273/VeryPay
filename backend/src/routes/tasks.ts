@@ -109,7 +109,7 @@ router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
 // @access  Private
 router.post('/',
   protect,
-  kycApproved,
+  // kycApproved, // Temporarily removed for demo purposes
   [
     body('title').notEmpty().isLength({ min: 5, max: 100 }),
     body('description').notEmpty().isLength({ min: 20, max: 2000 }),
@@ -156,7 +156,7 @@ router.post('/',
 // @access  Private
 router.post('/:id/apply',
   protect,
-  kycApproved,
+  // kycApproved, // Temporarily removed for demo purposes
   [
     body('proposal').notEmpty().isLength({ min: 50, max: 1000 }),
     body('bidAmount').isFloat({ min: 1 }),

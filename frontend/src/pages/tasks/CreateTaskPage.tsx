@@ -70,29 +70,52 @@ export default function CreateTaskPage() {
     setIsLoading(true)
 
     try {
+      // Convert duration to deadline date
+      const deadlineDate = new Date()
+      if (formData.duration === '1 day') {
+        deadlineDate.setDate(deadlineDate.getDate() + 1)
+      } else if (formData.duration === '3 days') {
+        deadlineDate.setDate(deadlineDate.getDate() + 3)
+      } else if (formData.duration === '1 week') {
+        deadlineDate.setDate(deadlineDate.getDate() + 7)
+      } else if (formData.duration === '2 weeks') {
+        deadlineDate.setDate(deadlineDate.getDate() + 14)
+      } else if (formData.duration === '1 month') {
+        deadlineDate.setMonth(deadlineDate.getMonth() + 1)
+      } else {
+        // Default to 1 week if duration format is unexpected
+        deadlineDate.setDate(deadlineDate.getDate() + 7)
+      }
+
       const taskData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
         budget: parseFloat(formData.budget),
-        deadline: formData.duration,
+        deadline: deadlineDate.toISOString(),
         skills: formData.skills,
-        location: formData.location,
-        requirements: formData.requirements
+        location: formData.location || 'Remote',
+        isRemote: !formData.location || formData.location === 'Remote'
       }
 
       // Call the actual API to create the task
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/tasks`, {
+      const token = localStorage.getItem('vpay-token')
+      console.log('Token:', token ? 'Present' : 'Missing')
+      console.log('Task data:', taskData)
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3002/api'}/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('vpay-token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(taskData)
       })
 
       if (!response.ok) {
-        throw new Error('Failed to create task')
+        const errorData = await response.text()
+        console.error('API Error:', response.status, errorData)
+        throw new Error(`Failed to create task: ${response.status} ${errorData}`)
       }
 
       await response.json()
@@ -230,7 +253,7 @@ export default function CreateTaskPage() {
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  ≈ ${formData.budget ? (parseFloat(formData.budget) * 1.0).toFixed(2) : '0.00'} USD
+                  {formData.budget ? `${formData.budget} VRC` : '0 VRC'}
                 </p>
               </div>
 

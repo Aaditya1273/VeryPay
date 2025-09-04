@@ -14,6 +14,7 @@ import '@rainbow-me/rainbowkit/styles.css'
 import { config } from './config/wagmi'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider, useTheme } from './contexts/ThemeContext'
+import { WalletProvider } from './contexts/WalletContext'
 import App from './App.tsx'
 
 
@@ -140,10 +141,12 @@ const AppWithProviders: React.FC = () => {
             <QueryClientProvider client={queryClient}>
               <ThemeProvider>
                 <RainbowKitThemeProvider>
-                  <AuthProvider>
-                    <App />
-                    <Toaster {...toasterConfig} />
-                  </AuthProvider>
+                  <WalletProvider>
+                    <AuthProvider>
+                      <App />
+                      <Toaster {...toasterConfig} />
+                    </AuthProvider>
+                  </WalletProvider>
                 </RainbowKitThemeProvider>
               </ThemeProvider>
             </QueryClientProvider>

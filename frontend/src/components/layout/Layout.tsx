@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAccount } from 'wagmi'
-import { formatCurrency, formatAddress } from '../../lib/utils'
+import { formatAddress } from '../../lib/utils'
 import { ChatWindowEnhanced } from '../chat/ChatWindowEnhanced'
 import { ChatToggle } from '../chat/ChatToggle'
 import PaymentChatNotifications from '../chat/PaymentChatNotifications'
@@ -138,102 +138,61 @@ export default function Layout({ children }: LayoutProps) {
     <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
       <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
         {/* Navigation */}
-        <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
+        <nav className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 sticky top-0 z-50 shadow-sm">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="flex justify-between items-center h-20">
               {/* Logo */}
               <div className="flex items-center">
-                <Link to="/" className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">V</span>
+                <Link to="/" className="flex items-center space-x-3 group">
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                      <span className="text-white font-black text-xl tracking-tight">V</span>
+                    </div>
+                    <div className="absolute -inset-0.5 bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-xl opacity-20 group-hover:opacity-40 transition-opacity duration-300 blur-sm"></div>
                   </div>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">VPay</span>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">VPay</span>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 -mt-1 tracking-widest uppercase">Professional</span>
+                  </div>
                 </Link>
               </div>
 
-              {/* Desktop Navigation */}
-              <div className="hidden md:flex items-center space-x-8">
+              {/* Desktop Navigation - Icon Only Design */}
+              <div className="hidden lg:flex items-center space-x-2">
                 {navigationItems.map((item) => {
                   const Icon = item.icon
                   
-                  // Special handling for Gamification dropdown
-                  if (item.name === 'Gamification') {
-                    return (
-                      <div key={item.name} className="relative group">
-                        <Link
-                          to={item.href}
-                          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                            isActiveRoute(item.href)
-                              ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
-                              : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.name}</span>
-                          <ChevronDown className="h-3 w-3" />
-                        </Link>
-                        
-                        {/* Gamification Dropdown */}
-                        <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                          <div className="py-1">
-                            <Link
-                              to="/quests"
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                              <Target className="h-4 w-4 mr-2" />
-                              Quests
-                            </Link>
-                            <Link
-                              to="/streaks"
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                              <Flame className="h-4 w-4 mr-2" />
-                              Streaks
-                            </Link>
-                            <Link
-                              to="/leaderboards"
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                              <Crown className="h-4 w-4 mr-2" />
-                              Leaderboards
-                            </Link>
-                            <Link
-                              to="/badges"
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                              <Award className="h-4 w-4 mr-2" />
-                              NFT Badges
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  }
-                  
                   return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        isActiveRoute(item.href)
-                          ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </Link>
+                    <div key={item.name} className="relative group">
+                      <Link
+                        to={item.href}
+                        className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 group ${
+                          isActiveRoute(item.href)
+                            ? 'text-white bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg shadow-purple-500/30 scale-105'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 hover:scale-105'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </Link>
+                      
+                      {/* Professional Tooltip */}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 whitespace-nowrap shadow-lg">
+                        {item.name}
+                        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45"></div>
+                      </div>
+                    </div>
                   )
                 })}
               </div>
 
               {/* Right side items */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
                 {/* Balance (if wallet connected) */}
                 {isConnected && (
-                  <div className="hidden sm:flex items-center space-x-2 px-3 py-1 bg-purple-50 dark:bg-purple-900/20 rounded-full">
-                    <Wallet className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                  <div className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl border border-emerald-200/50 dark:border-emerald-700/50">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <Wallet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                       Connected
                     </span>
                   </div>
@@ -282,17 +241,25 @@ export default function Layout({ children }: LayoutProps) {
 
                 {/* User Menu */}
                 <div className="relative group">
-                  <Button
-                    variant="ghost"
-                    className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
-                  >
-                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <button className="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200 group-hover:scale-105">
+                    <div className="relative">
+                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <User className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-950 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
                     </div>
-                    <span className="hidden sm:block text-sm font-medium">
-                      {user?.username || 'User'}
-                    </span>
-                  </Button>
+                    <div className="hidden sm:block text-left">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {user?.username || 'User'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Professional
+                      </p>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors duration-200" />
+                  </button>
 
                   {/* Dropdown Menu */}
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">

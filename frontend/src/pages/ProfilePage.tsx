@@ -52,8 +52,8 @@ export default function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
-  const { user, logout } = useAuth()
-  const { account, balance, disconnectWallet } = useWallet()
+  const { user, logout, updateUser } = useAuth()
+  const { account, isConnected } = useWallet()
 
   useEffect(() => {
     fetchProfile()
@@ -68,7 +68,7 @@ export default function ProfilePage() {
         throw new Error('No authentication token found')
       }
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/profile`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/users/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -141,7 +141,7 @@ export default function ProfilePage() {
       formData.append('avatar', avatarFile)
       
       const token = localStorage.getItem('vpay-token')
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/avatar`, formData, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/users/avatar`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -180,7 +180,7 @@ export default function ProfilePage() {
         ...(avatarUrl && { avatar: avatarUrl })
       }
 
-      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/user/profile`, updateData, {
+      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/users/profile`, updateData, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -203,11 +203,11 @@ export default function ProfilePage() {
           ...updateData
         }
         setProfile(newProfile)
-        // Sync with AuthContext
+        // Sync with AuthContext (get walletAddress from WalletContext)
         updateUser({
           fullName: newProfile.fullName,
           avatar: newProfile.avatar,
-          walletAddress: newProfile.walletAddress
+          walletAddress: account || undefined // Use wallet address from WalletContext
         })
       }
 
@@ -295,7 +295,6 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     await logout()
-    await disconnectWallet()
   }
 
   if (loading) {
@@ -341,7 +340,7 @@ export default function ProfilePage() {
         <CardContent className="p-6">
           <div className="flex items-start space-x-6">
             <div className="relative">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-vpay-purple-500 to-vpay-purple-600 flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Profile Preview" className="w-full h-full rounded-full object-cover" />
                 ) : profile.avatar ? (
@@ -350,7 +349,7 @@ export default function ProfilePage() {
                   profile.username.charAt(0).toUpperCase()
                 )}
               </div>
-              <label className="absolute -bottom-1 -right-1 bg-vpay-purple-500 hover:bg-vpay-purple-600 text-white rounded-full p-1.5 transition-colors cursor-pointer">
+              <label className="absolute -bottom-1 -right-1 bg-purple-500 hover:bg-purple-600 text-white rounded-full p-1.5 transition-colors cursor-pointer">
                 <Camera className="h-3 w-3" />
                 <input
                   type="file"
@@ -412,7 +411,7 @@ export default function ProfilePage() {
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md transition-colors ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-gray-700 text-vpay-purple-600 shadow-sm'
+                ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -521,7 +520,7 @@ export default function ProfilePage() {
                         profile.skills.map(skill => (
                           <span
                             key={skill}
-                            className="px-2 py-1 bg-vpay-purple-100 dark:bg-vpay-purple-900/20 text-vpay-purple-700 dark:text-vpay-purple-300 text-sm rounded-full"
+                            className="px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 text-sm rounded-full"
                           >
                             {skill}
                           </span>
@@ -579,15 +578,15 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {account ? (
+              {isConnected && account ? (
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <p className="font-medium">Connected Wallet</p>
                     <p className="text-sm text-muted-foreground font-mono">{formatAddress(account)}</p>
-                    <p className="text-sm text-muted-foreground">Balance: {formatCurrency(parseFloat(balance))}</p>
+                    <p className="text-sm text-muted-foreground">Status: Connected</p>
                   </div>
-                  <Button variant="outline" onClick={disconnectWallet}>
-                    Disconnect
+                  <Button variant="outline" disabled>
+                    Connected
                   </Button>
                 </div>
               ) : (
